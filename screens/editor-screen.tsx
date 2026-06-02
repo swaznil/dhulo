@@ -179,18 +179,17 @@ export function EditorScreen({
           />
         )}
 
-          {settingsOpen && (
-            <NoteOptionsSheet
-              duration={duration}
-              noteThemeId={noteThemeId}
-              onClose={() => setSettingsOpen(false)}
-              onDurationChange={onDurationChange}
-              onStyleChange={onStyleChange}
-              onThemeChange={onThemeChange}
-              styleId={styleId}
-              theme={theme}
-            />
-          )}
+          <NoteOptionsSheet
+            duration={duration}
+            noteThemeId={noteThemeId}
+            onClose={() => setSettingsOpen(false)}
+            onDurationChange={onDurationChange}
+            onStyleChange={onStyleChange}
+            onThemeChange={onThemeChange}
+            styleId={styleId}
+            theme={theme}
+            visible={settingsOpen}
+          />
         </KeyboardAvoidingView>
       </SafeAreaView>
     </AmbientBackground>
@@ -206,6 +205,7 @@ function NoteOptionsSheet({
   onThemeChange,
   styleId,
   theme,
+  visible,
 }: {
   duration: number;
   noteThemeId: ThemeId;
@@ -215,16 +215,17 @@ function NoteOptionsSheet({
   onThemeChange: (themeId: ThemeId) => void;
   styleId: DecayStyle;
   theme: typeof DHULO_THEMES.obsidian;
+  visible: boolean;
 }) {
   const entrance = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(entrance, {
-      duration: 180,
-      toValue: 1,
+      duration: visible ? 120 : 90,
+      toValue: visible ? 1 : 0,
       useNativeDriver: true,
     }).start();
-  }, [entrance]);
+  }, [entrance, visible]);
 
   const backdropStyle = {
     opacity: entrance.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
@@ -235,7 +236,7 @@ function NoteOptionsSheet({
   };
 
   return (
-    <View style={styles.sheetLayer}>
+    <View pointerEvents={visible ? 'auto' : 'none'} style={styles.sheetLayer}>
       <Animated.View pointerEvents="none" style={[styles.sheetBackdrop, backdropStyle]} />
       <Pressable accessibilityLabel="Close note options" onPress={onClose} style={StyleSheet.absoluteFill} />
       <Animated.View style={[styles.sheet, { backgroundColor: theme.surface, borderColor: theme.border }, sheetStyle]}>

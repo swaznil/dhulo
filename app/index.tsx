@@ -17,7 +17,7 @@ import { SettingsScreen } from '@/screens/settings-screen';
 type ScreenMode = 'home' | 'editor' | 'reader' | 'profile' | 'settings';
 
 export default function DhuloScreen() {
-  const { addNote, continueNote, notes, preserveNote, quickBurnNote, removeNote } = useNotes();
+  const { addNote, continueNote, notes, preserveNote, removeNote } = useNotes();
   const {
     appBackgroundStyle,
     appThemeId,
@@ -257,7 +257,7 @@ export default function DhuloScreen() {
           onContinue={() => continueNote(readerNote.id)}
           onDelete={() => requestDelete(readerNote, closeReader)}
           onPreserve={() => preserveNote(readerNote.id)}
-          onQuickBurn={() => quickBurnNote(readerNote.id)}
+          onQuickBurn={() => requestDelete(readerNote, closeReader)}
         />
         {finaleNote ? <FinalDeleteAnimation note={finaleNote} onFinish={completeDelete} /> : null}
       </>
