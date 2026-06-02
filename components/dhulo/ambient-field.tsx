@@ -5,6 +5,7 @@ import { DhuloTheme, ThemeId } from '@/lib/dhulo';
 import { AMBIENT_MOTION_MS } from '@/utils/animation';
 
 type AmbientFieldProps = PropsWithChildren<{
+  animated?: boolean;
   backgroundStyle?: DhuloTheme['backgroundStyle'];
   theme: DhuloTheme;
 }>;
@@ -83,10 +84,15 @@ const FIELD_BY_THEME: Record<ThemeId, { x: number; y: number; size: number; dela
 };
 const EXTRA_MARKS = Array.from({ length: 4 }, (_, index) => index);
 
-export function AmbientField({ backgroundStyle, children, theme }: AmbientFieldProps) {
+export function AmbientField({ animated = true, backgroundStyle, children, theme }: AmbientFieldProps) {
   const motion = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    if (!animated) {
+      motion.setValue(0);
+      return;
+    }
+
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(motion, {
@@ -106,7 +112,7 @@ export function AmbientField({ backgroundStyle, children, theme }: AmbientFieldP
 
     animation.start();
     return () => animation.stop();
-  }, [motion]);
+  }, [animated, motion]);
 
   const motes = useMemo(() => FIELD_BY_THEME[theme.id].filter((_, index) => index < 4), [theme.id]);
   const activeBackgroundStyle = backgroundStyle ?? theme.backgroundStyle;

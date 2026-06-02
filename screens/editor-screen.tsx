@@ -49,7 +49,7 @@ export function EditorScreen({
   title,
 }: Props) {
   const theme = DHULO_THEMES[noteThemeId];
-  const { keyboardHeight, visible: keyboardVisible } = useKeyboardToolbar();
+  const keyboard = useKeyboardToolbar();
   const [imageFailed, setImageFailed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [bodyHistory, setBodyHistory] = useState([body]);
@@ -107,7 +107,7 @@ export function EditorScreen({
   const timestamp = useMemo(() => formatTimestamp(Date.now()), []);
 
   return (
-    <AmbientBackground theme={theme}>
+    <AmbientBackground animated={false} theme={theme}>
       <StatusBar style={theme.mode === 'light' ? 'dark' : 'light'} />
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.keyboard}>
@@ -125,7 +125,7 @@ export function EditorScreen({
             </View>
           </View>
 
-          <ScrollView contentContainerStyle={[styles.content, { paddingBottom: keyboardVisible ? 126 : 104 }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={[styles.content, { paddingBottom: keyboard.visible ? 126 : 104 }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <TextInput
               onChangeText={setTitle}
               placeholder="Title"
@@ -165,9 +165,10 @@ export function EditorScreen({
             />
           </ScrollView>
 
+        {keyboard.visible && (
           <FloatingToolbar
             bodySize={bodySize}
-            bottom={keyboardVisible ? keyboardHeight + 10 : 22}
+            bottom={keyboard.keyboardHeight + 10}
             canRedo={canRedo}
             canUndo={canUndo}
             onAttachImage={attachImage}
@@ -176,8 +177,9 @@ export function EditorScreen({
             onUndo={undoBody}
             theme={theme}
           />
+        )}
 
-          {settingsOpen ? (
+          {settingsOpen && (
             <NoteOptionsSheet
               duration={duration}
               noteThemeId={noteThemeId}
@@ -188,7 +190,7 @@ export function EditorScreen({
               styleId={styleId}
               theme={theme}
             />
-          ) : null}
+          )}
         </KeyboardAvoidingView>
       </SafeAreaView>
     </AmbientBackground>
