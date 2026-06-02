@@ -46,7 +46,7 @@ export function ProfileScreen({
   const now = Date.now();
   const goneCount = notes.filter((note) => getNoteProgress(note, now) >= 1).length;
   const wordCount = notes.reduce((total, note) => total + note.body.trim().split(/\s+/).filter(Boolean).length, 0);
-  const activeTheme = DHULO_THEMES[selectedThemeId];
+  const preservedCount = notes.filter((note) => note.isPreserved).length;
 
   return (
     <AmbientBackground backgroundStyle={selectedBackgroundStyle} theme={theme}>
@@ -89,7 +89,7 @@ export function ProfileScreen({
             <StatTile label="Memories faded" theme={theme} value={`${goneCount}`} />
             <StatTile label="Words dissolved" theme={theme} value={`${wordCount}`} />
             <StatTile label="Notes held" theme={theme} value={`${notes.length}`} />
-            <StatTile label="Current mood" theme={theme} value={activeTheme.name} />
+            <StatTile label="Notes kept" theme={theme} value={`${preservedCount}`} />
           </View>
 
           <Text style={[styles.sectionLabel, { color: theme.faint }]}>Personal themes</Text>

@@ -55,9 +55,6 @@ export function EditorScreen({
   const [bodyHistory, setBodyHistory] = useState([body]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [bodySize, setBodySize] = useState(18);
-  const [bodyBold, setBodyBold] = useState(false);
-  const [bodyItalic, setBodyItalic] = useState(false);
-  const [bodyUnderline, setBodyUnderline] = useState(false);
   const currentHistoryBody = bodyHistory[historyIndex] ?? '';
   const canUndo = historyIndex > 0 || body !== currentHistoryBody;
   const canRedo = historyIndex < bodyHistory.length - 1;
@@ -159,10 +156,8 @@ export function EditorScreen({
                 {
                   color: theme.text,
                   fontSize: bodySize,
-                  fontStyle: bodyItalic ? 'italic' : 'normal',
-                  fontWeight: bodyBold ? '800' : '400',
+                  fontWeight: '400',
                   lineHeight: bodySize * 1.58,
-                  textDecorationLine: bodyUnderline ? 'underline' : 'none',
                 },
               ]}
               textAlignVertical="top"
@@ -172,20 +167,14 @@ export function EditorScreen({
 
           <FloatingToolbar
             bodySize={bodySize}
-            bold={bodyBold}
             bottom={keyboardVisible ? keyboardHeight + 10 : 22}
             canRedo={canRedo}
             canUndo={canUndo}
-            italic={bodyItalic}
             onAttachImage={attachImage}
             onBodySizeChange={setBodySize}
             onRedo={redoBody}
-            onToggleBold={() => setBodyBold((active) => !active)}
-            onToggleItalic={() => setBodyItalic((active) => !active)}
-            onToggleUnderline={() => setBodyUnderline((active) => !active)}
             onUndo={undoBody}
             theme={theme}
-            underline={bodyUnderline}
           />
 
           {settingsOpen ? (
@@ -248,53 +237,55 @@ function NoteOptionsSheet({
       <Animated.View pointerEvents="none" style={[styles.sheetBackdrop, backdropStyle]} />
       <Pressable accessibilityLabel="Close note options" onPress={onClose} style={StyleSheet.absoluteFill} />
       <Animated.View style={[styles.sheet, { backgroundColor: theme.surface, borderColor: theme.border }, sheetStyle]}>
-        <View style={styles.sheetHeader}>
-          <View>
-            <Text style={[styles.sheetTitle, { color: theme.text }]}>Note behavior</Text>
-            <Text style={[styles.sheetSubtitle, { color: theme.muted }]}>Every note fades after this timer.</Text>
+        <ScrollView contentContainerStyle={styles.sheetContent} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+          <View style={styles.sheetHeader}>
+            <View>
+              <Text style={[styles.sheetTitle, { color: theme.text }]}>Note behavior</Text>
+              <Text style={[styles.sheetSubtitle, { color: theme.muted }]}>Every note fades after this timer.</Text>
+            </View>
+            <Pressable accessibilityLabel="Close" accessibilityRole="button" onPress={onClose} style={[styles.iconButton, { backgroundColor: theme.elevated }]}>
+              <MaterialIcons name="close" size={20} color={theme.text} />
+            </Pressable>
           </View>
-          <Pressable accessibilityLabel="Close" accessibilityRole="button" onPress={onClose} style={[styles.iconButton, { backgroundColor: theme.elevated }]}>
-            <MaterialIcons name="close" size={20} color={theme.text} />
-          </Pressable>
-        </View>
 
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionLabel, { color: theme.faint }]}>Decay style</Text>
-          <Text style={[styles.sectionValue, { color: theme.muted }]}>{DECAY_OPTIONS.find((option) => option.id === styleId)?.name}</Text>
-        </View>
-        <DecayPreview onSelect={onStyleChange} selectedStyle={styleId} theme={theme} />
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionLabel, { color: theme.faint }]}>Decay style</Text>
+            <Text style={[styles.sectionValue, { color: theme.muted }]}>{DECAY_OPTIONS.find((option) => option.id === styleId)?.name}</Text>
+          </View>
+          <DecayPreview onSelect={onStyleChange} selectedStyle={styleId} theme={theme} />
 
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionLabel, { color: theme.faint }]}>Lifespan</Text>
-          <Text style={[styles.sectionValue, { color: theme.muted }]}>{formatDuration(duration)}</Text>
-        </View>
-        <DurationWheel onChange={onDurationChange} theme={theme} value={duration} />
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionLabel, { color: theme.faint }]}>Lifespan</Text>
+            <Text style={[styles.sectionValue, { color: theme.muted }]}>{formatDuration(duration)}</Text>
+          </View>
+          <DurationWheel onChange={onDurationChange} theme={theme} value={duration} />
 
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionLabel, { color: theme.faint }]}>Paper tone</Text>
-          <Text style={[styles.sectionValue, { color: theme.muted }]}>{DHULO_THEMES[noteThemeId].name}</Text>
-        </View>
-        <View style={styles.themeStrip}>
-          {NOTE_COLOR_IDS.map((themeId) => {
-            const noteTheme = DHULO_THEMES[themeId];
-            const selected = themeId === noteThemeId;
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionLabel, { color: theme.faint }]}>Paper tone</Text>
+            <Text style={[styles.sectionValue, { color: theme.muted }]}>{DHULO_THEMES[noteThemeId].name}</Text>
+          </View>
+          <ScrollView contentContainerStyle={styles.themeStrip} horizontal nestedScrollEnabled showsHorizontalScrollIndicator={false}>
+            {NOTE_COLOR_IDS.map((themeId) => {
+              const noteTheme = DHULO_THEMES[themeId];
+              const selected = themeId === noteThemeId;
 
-            return (
-              <Pressable
-                accessibilityLabel={`Use ${noteTheme.name} note theme`}
-                accessibilityRole="button"
-                key={themeId}
-                onPress={() => onThemeChange(themeId)}
-                style={[styles.themeChoice, { backgroundColor: noteTheme.surface, borderColor: selected ? theme.accent : noteTheme.border }]}>
-                <View style={[styles.themeChoicePreview, { backgroundColor: noteTheme.background }]}>
-                  <View style={[styles.themeChoiceAccent, { backgroundColor: noteTheme.accent }]} />
-                  <View style={[styles.themeChoiceLine, { backgroundColor: noteTheme.muted }]} />
-                </View>
-                <Text numberOfLines={1} style={[styles.themeChoiceName, { color: noteTheme.text }]}>{noteTheme.name}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+              return (
+                <Pressable
+                  accessibilityLabel={`Use ${noteTheme.name} note theme`}
+                  accessibilityRole="button"
+                  key={themeId}
+                  onPress={() => onThemeChange(themeId)}
+                  style={[styles.themeChoice, { backgroundColor: noteTheme.surface, borderColor: selected ? theme.accent : noteTheme.border }]}>
+                  <View style={[styles.themeChoicePreview, { backgroundColor: noteTheme.background }]}>
+                    <View style={[styles.themeChoiceAccent, { backgroundColor: noteTheme.accent }]} />
+                    <View style={[styles.themeChoiceLine, { backgroundColor: noteTheme.muted }]} />
+                  </View>
+                  <Text numberOfLines={1} style={[styles.themeChoiceName, { color: noteTheme.text }]}>{noteTheme.name}</Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </ScrollView>
       </Animated.View>
     </View>
   );
@@ -392,10 +383,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
     borderWidth: 1,
-    gap: 12,
     maxHeight: '88%',
-    padding: 18,
-    paddingBottom: 28,
+    overflow: 'hidden',
   },
   sheetBackdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -405,6 +394,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  sheetContent: {
+    gap: 12,
+    padding: 18,
+    paddingBottom: 30,
   },
   sheetLayer: {
     ...StyleSheet.absoluteFillObject,
@@ -425,6 +419,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     paddingBottom: 4,
+    paddingRight: 16,
   },
   themeChoice: {
     borderRadius: 8,

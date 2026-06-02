@@ -90,7 +90,7 @@ export function SettingsScreen({
             </Text>
           </Section>
 
-          <Section title="Ceremony" theme={theme}>
+          <Section title="Feedback" theme={theme}>
             <ToggleRow label="Warm haptics" onValueChange={onHapticsChange} theme={theme} value={hapticsEnabled} />
             <ToggleRow label="Soft sound cues" onValueChange={onSoundChange} theme={theme} value={soundEnabled} />
           </Section>
@@ -102,11 +102,16 @@ export function SettingsScreen({
             <ActionRow icon="privacy-tip" label="Privacy and local storage" onPress={() => Alert.alert('Privacy', 'Dhulo stores your notes locally on this device using app storage.')} theme={theme} />
           </Section>
 
-          <View style={styles.about}>
-            <Text style={[styles.aboutTitle, { color: theme.text }]}>About Dhulo</Text>
-            <Text style={[styles.aboutText, { color: theme.muted }]}>
-              Dhulo notes are temporary by default. It is not an archive, but a quiet place for feelings, fragments, and memories that do not need to stay forever.
-            </Text>
+          <View style={[styles.about, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <View style={[styles.aboutIcon, { backgroundColor: theme.elevated }]}>
+              <MaterialIcons name="auto-stories" size={20} color={theme.accent} />
+            </View>
+            <View style={styles.aboutCopy}>
+              <Text style={[styles.aboutTitle, { color: theme.text }]}>About Dhulo</Text>
+              <Text style={[styles.aboutText, { color: theme.muted }]}>
+                Dhulo is a quiet place for feelings, fragments, and memories that do not need to stay forever. Notes are temporary by default and remain local to this device.
+              </Text>
+            </View>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -174,8 +179,22 @@ function ToggleRow({
 
 const styles = StyleSheet.create({
   about: {
-    paddingBottom: 16,
-    paddingHorizontal: 2,
+    alignItems: 'flex-start',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 12,
+    padding: 16,
+  },
+  aboutCopy: {
+    flex: 1,
+  },
+  aboutIcon: {
+    alignItems: 'center',
+    borderRadius: 8,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
   },
   aboutText: {
     fontSize: 14,

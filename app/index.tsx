@@ -1,3 +1,4 @@
+import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -46,6 +47,7 @@ export default function DhuloScreen() {
   const [draftThemeId, setDraftThemeId] = useState<ThemeId>(appThemeId);
   const [finaleNote, setFinaleNote] = useState<DhuloNote | null>(null);
   const afterFinalDeleteRef = useRef<(() => void) | null>(null);
+  const releaseCue = useAudioPlayer(require('@/assets/sounds/soft-release.wav'), { keepAudioSessionActive: false });
 
   const readerNote = useMemo(() => notes.find((note) => note.id === readerNoteId) ?? null, [notes, readerNoteId]);
 
@@ -70,11 +72,29 @@ export default function DhuloScreen() {
       if (hapticsEnabled) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
       }
+      if (soundEnabled) {
+        releaseCue.volume = 0.34;
+        releaseCue.seekTo(0).then(() => releaseCue.play()).catch(() => undefined);
+      }
       afterFinalDeleteRef.current = afterDelete ?? null;
       setFinaleNote(note);
     },
-    [finaleNote, hapticsEnabled]
+    [finaleNote, hapticsEnabled, releaseCue, soundEnabled]
   );
+
+  useEffect(() => {
+    if (!soundEnabled) {
+      return;
+    }
+
+    setAudioModeAsync({
+      allowsRecording: false,
+      interruptionMode: 'mixWithOthers',
+      playsInSilentMode: true,
+      shouldPlayInBackground: false,
+      shouldRouteThroughEarpiece: false,
+    }).catch(() => undefined);
+  }, [soundEnabled]);
 
   useEffect(() => {
     if (!autoEraseEnabled || finaleNote) {

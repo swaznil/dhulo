@@ -9,37 +9,25 @@ type IconName = ComponentProps<typeof MaterialIcons>['name'];
 type Props = {
   bottom: number;
   bodySize: number;
-  bold: boolean;
   canRedo: boolean;
   canUndo: boolean;
-  italic: boolean;
   onAttachImage: () => void;
   onBodySizeChange: (size: number) => void;
   onRedo: () => void;
-  onToggleBold: () => void;
-  onToggleItalic: () => void;
-  onToggleUnderline: () => void;
   onUndo: () => void;
   theme: DhuloTheme;
-  underline: boolean;
 };
 
 export const FloatingToolbar = memo(function FloatingToolbar({
   bodySize,
-  bold,
   bottom,
   canRedo,
   canUndo,
-  italic,
   onAttachImage,
   onBodySizeChange,
   onRedo,
-  onToggleBold,
-  onToggleItalic,
-  onToggleUnderline,
   onUndo,
   theme,
-  underline,
 }: Props) {
   return (
     <View
@@ -54,9 +42,6 @@ export const FloatingToolbar = memo(function FloatingToolbar({
       ]}>
       <ToolbarIcon accessibilityLabel="Attach image" icon="image" onPress={onAttachImage} theme={theme} />
       <View style={[styles.divider, { backgroundColor: theme.border }]} />
-      <ToolbarIcon accessibilityLabel="Bold" active={bold} icon="format-bold" onPress={onToggleBold} theme={theme} />
-      <ToolbarIcon accessibilityLabel="Italic" active={italic} icon="format-italic" onPress={onToggleItalic} theme={theme} />
-      <ToolbarIcon accessibilityLabel="Underline" active={underline} icon="format-underlined" onPress={onToggleUnderline} theme={theme} />
       <ToolbarIcon accessibilityLabel="Undo" disabled={!canUndo} icon="undo" onPress={onUndo} theme={theme} />
       <ToolbarIcon accessibilityLabel="Redo" disabled={!canRedo} icon="redo" onPress={onRedo} theme={theme} />
       <View style={[styles.sizeGroup, { backgroundColor: theme.elevated }]}>
