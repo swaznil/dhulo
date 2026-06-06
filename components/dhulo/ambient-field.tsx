@@ -137,24 +137,50 @@ export function AmbientField({ animated = true, backgroundStyle, children, theme
               styles.mote,
               {
                 backgroundColor: index % 2 === 0 ? theme.accent : theme.secondary,
-                borderRadius: activeBackgroundStyle === 'paper' ? 8 : activeBackgroundStyle === 'signal' ? 2 : 4,
+                borderRadius:
+                  activeBackgroundStyle === 'hearts'
+                    ? mote.size
+                    : activeBackgroundStyle === 'orbit'
+                      ? 999
+                      : activeBackgroundStyle === 'paper' || activeBackgroundStyle === 'blocks'
+                        ? 8
+                        : activeBackgroundStyle === 'signal'
+                          ? 2
+                          : 4,
                 height:
-                  activeBackgroundStyle === 'signal'
+                  activeBackgroundStyle === 'hearts'
+                    ? mote.size * 0.62
+                    : activeBackgroundStyle === 'orbit'
+                      ? mote.size * 1.1
+                      : activeBackgroundStyle === 'signal'
                     ? mote.size * 0.18
                     : activeBackgroundStyle === 'garden'
                       ? mote.size * 1.35
-                      : mote.size * 0.72,
+                      : activeBackgroundStyle === 'blocks'
+                        ? mote.size * 0.92
+                        : mote.size * 0.72,
                 left: `${mote.x}%`,
                 opacity,
                 top: `${mote.y}%`,
                 transform: [
                   { translateY },
-                  { rotate: activeBackgroundStyle === 'signal' ? '-18deg' : index % 2 === 0 ? '8deg' : '-10deg' },
+                  { rotate: activeBackgroundStyle === 'signal' ? '-18deg' : activeBackgroundStyle === 'hearts' ? '45deg' : index % 2 === 0 ? '8deg' : '-10deg' },
                 ],
-                width: activeBackgroundStyle === 'signal' ? mote.size * 2.7 : mote.size * 1.5,
+                width:
+                  activeBackgroundStyle === 'hearts'
+                    ? mote.size * 0.62
+                    : activeBackgroundStyle === 'orbit'
+                      ? mote.size * 1.1
+                      : activeBackgroundStyle === 'signal'
+                        ? mote.size * 2.7
+                        : activeBackgroundStyle === 'blocks'
+                          ? mote.size * 1.8
+                          : mote.size * 1.5,
               },
             ]}
-          />
+          >
+            {activeBackgroundStyle === 'orbit' ? <View style={[styles.orbitCore, { borderColor: theme.secondary }]} /> : null}
+          </Animated.View>
         );
       })}
       {EXTRA_MARKS.map((mark) => {
@@ -173,23 +199,31 @@ export function AmbientField({ animated = true, backgroundStyle, children, theme
               {
                 backgroundColor: mark % 2 === 0 ? theme.accent : theme.secondary,
                 borderRadius:
-                  activeBackgroundStyle === 'signal'
+                  activeBackgroundStyle === 'hearts'
+                    ? 999
+                    : activeBackgroundStyle === 'orbit'
+                      ? 999
+                      : activeBackgroundStyle === 'signal'
                     ? 2
-                    : activeBackgroundStyle === 'paper'
+                    : activeBackgroundStyle === 'paper' || activeBackgroundStyle === 'blocks'
                       ? 3
                       : activeBackgroundStyle === 'garden'
                         ? 999
                         : 6,
                 height:
-                  activeBackgroundStyle === 'signal'
+                  activeBackgroundStyle === 'hearts'
+                    ? size * 0.54
+                    : activeBackgroundStyle === 'orbit'
+                      ? size * 1.15
+                      : activeBackgroundStyle === 'signal'
                     ? 3
-                    : activeBackgroundStyle === 'paper'
+                    : activeBackgroundStyle === 'paper' || activeBackgroundStyle === 'blocks'
                       ? size * 1.25
                       : activeBackgroundStyle === 'mist'
                         ? size * 0.44
                         : size,
                 left: `${(mark * 19 + 8) % 92}%`,
-                opacity: activeBackgroundStyle === 'void' ? 0.12 : 0.16,
+                opacity: activeBackgroundStyle === 'void' ? 0.12 : activeBackgroundStyle === 'hearts' ? 0.2 : 0.16,
                 top: `${(mark * 13 + 10) % 88}%`,
                 transform: [
                   { translateX: drift },
@@ -197,13 +231,19 @@ export function AmbientField({ animated = true, backgroundStyle, children, theme
                     rotate:
                       activeBackgroundStyle === 'signal'
                         ? '-10deg'
+                        : activeBackgroundStyle === 'hearts'
+                          ? '45deg'
                         : activeBackgroundStyle === 'garden'
                           ? `${mark % 2 === 0 ? -24 : 28}deg`
                           : `${mark % 2 === 0 ? 7 : -9}deg`,
                   },
                 ],
                 width:
-                  activeBackgroundStyle === 'signal'
+                  activeBackgroundStyle === 'hearts'
+                    ? size * 0.54
+                    : activeBackgroundStyle === 'orbit'
+                      ? size * 1.15
+                      : activeBackgroundStyle === 'signal'
                     ? size * 3.8
                     : activeBackgroundStyle === 'mist'
                       ? size * 3.4
@@ -212,7 +252,14 @@ export function AmbientField({ animated = true, backgroundStyle, children, theme
                         : size,
               },
             ]}
-          />
+          >
+            {activeBackgroundStyle === 'hearts' ? (
+              <>
+                <View style={[styles.heartLobe, { backgroundColor: mark % 2 === 0 ? theme.accent : theme.secondary }]} />
+                <View style={[styles.heartLobe, styles.heartLobeRight, { backgroundColor: mark % 2 === 0 ? theme.accent : theme.secondary }]} />
+              </>
+            ) : null}
+          </Animated.View>
         );
       })}
       {children}
@@ -230,5 +277,24 @@ const styles = StyleSheet.create({
   },
   extraMark: {
     position: 'absolute',
+  },
+  heartLobe: {
+    borderRadius: 999,
+    height: '100%',
+    left: '-45%',
+    position: 'absolute',
+    top: 0,
+    width: '100%',
+  },
+  heartLobeRight: {
+    left: 0,
+    top: '-45%',
+  },
+  orbitCore: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 999,
+    borderWidth: 2,
+    opacity: 0.5,
+    transform: [{ scale: 1.42 }],
   },
 });

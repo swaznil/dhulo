@@ -177,13 +177,31 @@ function BackgroundPreview({ backgroundStyle, themeId }: { backgroundStyle: AppB
             styles.previewMark,
             {
               backgroundColor: mark % 2 ? theme.secondary : theme.accent,
-              borderRadius: backgroundStyle === 'garden' ? 999 : backgroundStyle === 'signal' ? 2 : 5,
-              height: backgroundStyle === 'signal' ? 3 : backgroundStyle === 'paper' ? 22 : backgroundStyle === 'mist' ? 9 : 12 + mark,
+              borderRadius: backgroundStyle === 'garden' || backgroundStyle === 'orbit' || backgroundStyle === 'hearts' ? 999 : backgroundStyle === 'signal' ? 2 : 5,
+              height:
+                backgroundStyle === 'signal'
+                  ? 3
+                  : backgroundStyle === 'paper' || backgroundStyle === 'blocks'
+                    ? 22
+                    : backgroundStyle === 'mist'
+                      ? 9
+                      : backgroundStyle === 'hearts'
+                        ? 14
+                        : 12 + mark,
               left: `${8 + ((mark * 19) % 72)}%`,
               opacity: 0.2 + mark * 0.04,
               top: `${8 + ((mark * 13) % 72)}%`,
-              transform: [{ rotate: `${backgroundStyle === 'signal' ? -12 : mark % 2 ? -8 : 8}deg` }],
-              width: backgroundStyle === 'signal' ? 44 : backgroundStyle === 'mist' ? 40 : backgroundStyle === 'paper' ? 30 : 16 + mark * 3,
+              transform: [{ rotate: `${backgroundStyle === 'signal' ? -12 : backgroundStyle === 'hearts' ? 45 : mark % 2 ? -8 : 8}deg` }],
+              width:
+                backgroundStyle === 'signal'
+                  ? 44
+                  : backgroundStyle === 'mist'
+                    ? 40
+                    : backgroundStyle === 'paper' || backgroundStyle === 'blocks'
+                      ? 30
+                      : backgroundStyle === 'hearts'
+                        ? 14
+                        : 16 + mark * 3,
             },
           ]}
         />

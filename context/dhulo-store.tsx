@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Appearance } from 'react-native';
 import {
   PropsWithChildren,
   createContext,
@@ -29,7 +30,7 @@ type CreateNoteInput = {
   preservedProgress?: number;
 };
 
-export type AppBackgroundStyle = 'void' | 'mist' | 'paper' | 'garden' | 'signal';
+export type AppBackgroundStyle = 'void' | 'mist' | 'paper' | 'garden' | 'signal' | 'hearts' | 'orbit' | 'blocks';
 
 // --- Notes context (focused on notes + mutations)
 type NotesValue = {
@@ -77,7 +78,7 @@ const SettingsContext = createContext<SettingsValue | null>(null);
 const ProfileContext = createContext<ProfileValue | null>(null);
 
 const STORAGE_KEY = 'dhulo.store.v1';
-const BACKGROUND_STYLES: AppBackgroundStyle[] = ['void', 'mist', 'paper', 'garden', 'signal'];
+const BACKGROUND_STYLES: AppBackgroundStyle[] = ['void', 'mist', 'paper', 'garden', 'signal', 'hearts', 'orbit', 'blocks'];
 
 function normalizeBackgroundStyle(backgroundStyle?: string): AppBackgroundStyle {
   return BACKGROUND_STYLES.includes(backgroundStyle as AppBackgroundStyle) ? (backgroundStyle as AppBackgroundStyle) : 'void';
@@ -87,16 +88,20 @@ function normalizeDuration(duration?: number) {
   return typeof duration === 'number' && Number.isFinite(duration) ? Math.max(1, Math.round(duration)) : 180;
 }
 
+function getSystemThemeId(): ThemeId {
+  return Appearance.getColorScheme() === 'light' ? 'daylight' : 'obsidian';
+}
+
 export function DhuloStoreProvider({ children }: PropsWithChildren) {
   // Notes
   const [notes, setNotes] = useState<DhuloNote[]>([]);
 
   // Settings
-  const [appThemeId, setAppThemeId] = useState<ThemeId>('obsidian');
-  const [appBackgroundStyle, setAppBackgroundStyle] = useState<AppBackgroundStyle>('void');
+  const [appThemeId, setAppThemeId] = useState<ThemeId>(() => getSystemThemeId());
+  const [appBackgroundStyle, setAppBackgroundStyle] = useState<AppBackgroundStyle>(() => (Appearance.getColorScheme() === 'light' ? 'paper' : 'void'));
   const [defaultDuration, setDefaultDuration] = useState(180);
   const [defaultStyle, setDefaultStyle] = useState<DecayStyle>('drift');
-  const [autoEraseEnabled, setAutoEraseEnabled] = useState(true);
+  const [autoEraseEnabled, setAutoEraseEnabled] = useState(false);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(false);
 

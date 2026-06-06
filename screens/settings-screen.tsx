@@ -1,7 +1,7 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { StatusBar } from 'expo-status-bar';
 import { ComponentProps, ReactNode } from 'react';
-import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AmbientBackground } from '@/components/ambient-background';
@@ -48,6 +48,27 @@ export function SettingsScreen({
     await Share.share({
       message: 'Dhulo is a cinematic disappearing journal for thoughts that do not need to stay forever.',
     });
+  }
+
+  async function rateApp() {
+    const androidUrl = 'market://details?id=com.swapnilxd.dhulo';
+    const webUrl = 'https://play.google.com/store/apps/details?id=com.swapnilxd.dhulo';
+    const iosUrl = 'itms-apps://itunes.apple.com/app/id0000000000?action=write-review';
+    const url = Platform.OS === 'ios' ? iosUrl : androidUrl;
+
+    if (await Linking.canOpenURL(url)) {
+      await Linking.openURL(url);
+      return;
+    }
+
+    await Linking.openURL(webUrl);
+  }
+
+  function showPrivacy() {
+    Alert.alert(
+      'Privacy and local storage',
+      'Dhulo stores notes, settings, and profile details locally on this device. Notes are not uploaded by this app. Deleting the app or clearing app data removes local notes. Photos you attach stay referenced from device storage.'
+    );
   }
 
   return (
@@ -97,9 +118,9 @@ export function SettingsScreen({
 
           <Section title="Actions" theme={theme}>
             <ActionRow icon="palette" label="Personalisation" onPress={onPersonalizationPress} theme={theme} />
-            <ActionRow icon="star-border" label="Rate Dhulo" onPress={() => Alert.alert('Rate Dhulo', 'Store rating will be connected before release.')} theme={theme} />
+            <ActionRow icon="star-border" label="Rate Dhulo" onPress={rateApp} theme={theme} />
             <ActionRow icon="ios-share" label="Share Dhulo" onPress={shareApp} theme={theme} />
-            <ActionRow icon="privacy-tip" label="Privacy and local storage" onPress={() => Alert.alert('Privacy', 'Dhulo stores your notes locally on this device using app storage.')} theme={theme} />
+            <ActionRow icon="privacy-tip" label="Privacy and local storage" onPress={showPrivacy} theme={theme} />
           </Section>
 
           <View style={[styles.about, { backgroundColor: theme.surface, borderColor: theme.border }]}>
