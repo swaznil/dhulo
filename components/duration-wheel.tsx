@@ -107,7 +107,8 @@ const styles = StyleSheet.create({
   },
   item: {
     alignItems: 'center',
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 16,
     height: DURATION_ITEM_HEIGHT,
     justifyContent: 'center',
   },
@@ -125,7 +126,8 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   list: {
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 14,
     height: 168,
   },
   listContent: {
@@ -133,7 +135,8 @@ const styles = StyleSheet.create({
     paddingTop: 64,
   },
   wheel: {
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 14,
     flexDirection: 'row',
     gap: 10,
     height: 214,

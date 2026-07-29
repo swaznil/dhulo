@@ -256,7 +256,8 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   backgroundPreview: {
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 18,
     height: 66,
     overflow: 'hidden',
     position: 'relative',
@@ -264,7 +265,8 @@ const styles = StyleSheet.create({
   },
   backgroundTile: {
     alignItems: 'center',
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 20,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 12,
@@ -327,7 +329,8 @@ const styles = StyleSheet.create({
   },
   profileHero: {
     alignItems: 'flex-start',
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 24,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 16,
@@ -350,7 +353,8 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   statTile: {
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 16,
     borderWidth: 1,
     minHeight: 102,
     padding: 13,
@@ -388,7 +392,8 @@ const styles = StyleSheet.create({
     width: 28,
   },
   themePreview: {
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 18,
     height: 42,
     overflow: 'hidden',
     padding: 6,
@@ -401,7 +406,8 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   themeTile: {
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 20,
     borderWidth: 1,
     minHeight: 148,
     padding: 14,

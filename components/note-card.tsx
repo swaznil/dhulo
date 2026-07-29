@@ -5,22 +5,20 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { DecayText } from '@/components/dhulo/decay-text';
 import { useNoteDecay } from '@/hooks/use-note-decay';
 import { DHULO_THEMES, DhuloNote, getPreviewTitle } from '@/lib/dhulo';
-import { getDecayLabel, getDestroyCopy } from '@/utils/note';
+import { getDecayLabel } from '@/utils/note';
 
 type Props = {
   note: DhuloNote;
   now: number;
-  onDestroy: (note: DhuloNote) => void;
   onPress: (note: DhuloNote) => void;
 };
 
-function NoteCardInner({ note, now, onDestroy, onPress }: Props) {
+function NoteCardInner({ note, now, onPress }: Props) {
   const theme = DHULO_THEMES[note.themeId];
   const { isGone, progress, remainingLabel } = useNoteDecay(note, now);
   const visualProgress = Math.round(progress * 20) / 20;
   const [imageFailed, setImageFailed] = useState(false);
   const previewTitle = useMemo(() => getPreviewTitle(note, now), [note, now]);
-  const destroyCopy = getDestroyCopy(note.decayStyle);
   const bodyLines = note.imageUri && !imageFailed ? 3 : note.body.length > 120 ? 7 : 5;
 
   return (
@@ -79,7 +77,9 @@ function NoteCardInner({ note, now, onDestroy, onPress }: Props) {
 
         <View style={styles.footer}>
           <View style={[styles.tag, { backgroundColor: theme.elevated }]}>
-            <Text style={[styles.tagText, { color: theme.text }]}>{getDecayLabel(note.decayStyle)}</Text>
+            <Text style={[styles.tagText, { color: theme.text }]}>
+              {note.isDraft ? 'Draft' : note.isPreserved ? 'Preserved' : getDecayLabel(note.decayStyle)}
+            </Text>
           </View>
           <Text style={[styles.remaining, { color: theme.faint }]}>{remainingLabel}</Text>
         </View>
@@ -92,15 +92,15 @@ function NoteCardInner({ note, now, onDestroy, onPress }: Props) {
           </View>
           <Text style={[styles.goneText, { color: theme.text }]}>Gone</Text>
           <Pressable
-            accessibilityLabel={destroyCopy.action}
+            accessibilityLabel="Review expired note"
             accessibilityRole="button"
             onPress={(event) => {
               event.stopPropagation();
-              onDestroy(note);
+              onPress(note);
             }}
             style={[styles.destroyButton, { backgroundColor: theme.text }]}>
-            <MaterialIcons name={destroyCopy.icon} size={16} color={theme.background} />
-            <Text style={[styles.destroyText, { color: theme.background }]}>{destroyCopy.shortAction}</Text>
+            <MaterialIcons name="arrow-forward" size={16} color={theme.background} />
+            <Text style={[styles.destroyText, { color: theme.background }]}>Review</Text>
           </Pressable>
         </View>
       ) : null}
@@ -114,7 +114,6 @@ export const NoteCard = memo(NoteCardInner, (prev, next) => {
 
   return (
     prev.note === next.note &&
-    prev.onDestroy === next.onDestroy &&
     prev.onPress === next.onPress &&
     prevMinute === nextMinute
   );
@@ -126,7 +125,8 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   card: {
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
     marginBottom: 12,
     minHeight: 148,
@@ -196,7 +196,8 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   tag: {
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 7,
   },

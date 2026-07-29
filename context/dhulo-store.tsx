@@ -26,6 +26,7 @@ type CreateNoteInput = {
   durationMinutes: number;
   decayStyle: DecayStyle;
   themeId: ThemeId;
+  isDraft?: boolean;
   isPreserved?: boolean;
   preservedProgress?: number;
 };
@@ -37,26 +38,34 @@ type NotesValue = {
   notes: DhuloNote[];
   addNote: (input: CreateNoteInput) => void;
   continueNote: (id: string) => void;
+  duplicateNote: (id: string) => void;
+  extendNote: (id: string, minutes: number) => void;
   preserveNote: (id: string) => void;
   quickBurnNote: (id: string) => void;
   removeNote: (id: string) => void;
   restartNote: (id: string) => void;
+  updateNote: (id: string, input: CreateNoteInput) => void;
 };
 
 // --- Settings context (theme, background, defaults)
 type SettingsValue = {
   appThemeId: ThemeId;
   appBackgroundStyle: AppBackgroundStyle;
+  ambientMotionEnabled: boolean;
   defaultDuration: number;
   defaultStyle: DecayStyle;
   autoEraseEnabled: boolean;
+  guideCompleted: boolean;
   hapticsEnabled: boolean;
+  hydrated: boolean;
   soundEnabled: boolean;
   setAppThemeId: (themeId: ThemeId) => void;
   setAppBackgroundStyle: (backgroundStyle: AppBackgroundStyle) => void;
+  setAmbientMotionEnabled: (enabled: boolean) => void;
   setDefaultDuration: (duration: number) => void;
   setDefaultStyle: (style: DecayStyle) => void;
   setAutoEraseEnabled: (enabled: boolean) => void;
+  setGuideCompleted: (completed: boolean) => void;
   setHapticsEnabled: (enabled: boolean) => void;
   setSoundEnabled: (enabled: boolean) => void;
 };
@@ -77,7 +86,8 @@ const NotesContext = createContext<NotesValue | null>(null);
 const SettingsContext = createContext<SettingsValue | null>(null);
 const ProfileContext = createContext<ProfileValue | null>(null);
 
-const STORAGE_KEY = 'dhulo.store.v1';
+const STORAGE_KEY = 'dhulo.store.v2';
+const LEGACY_STORAGE_KEY = 'dhulo.store.v1';
 const BACKGROUND_STYLES: AppBackgroundStyle[] = ['void', 'mist', 'paper', 'garden', 'signal', 'hearts', 'orbit', 'blocks'];
 
 function normalizeBackgroundStyle(backgroundStyle?: string): AppBackgroundStyle {
@@ -99,9 +109,11 @@ export function DhuloStoreProvider({ children }: PropsWithChildren) {
   // Settings
   const [appThemeId, setAppThemeId] = useState<ThemeId>(() => getSystemThemeId());
   const [appBackgroundStyle, setAppBackgroundStyle] = useState<AppBackgroundStyle>(() => (Appearance.getColorScheme() === 'light' ? 'paper' : 'void'));
+  const [ambientMotionEnabled, setAmbientMotionEnabled] = useState(true);
   const [defaultDuration, setDefaultDuration] = useState(180);
   const [defaultStyle, setDefaultStyle] = useState<DecayStyle>('drift');
   const [autoEraseEnabled, setAutoEraseEnabled] = useState(false);
+  const [guideCompleted, setGuideCompleted] = useState(false);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(false);
 
@@ -118,7 +130,7 @@ export function DhuloStoreProvider({ children }: PropsWithChildren) {
 
     async function restoreStore() {
       try {
-        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        const stored = (await AsyncStorage.getItem(STORAGE_KEY)) ?? (await AsyncStorage.getItem(LEGACY_STORAGE_KEY));
 
         if (!stored || !mounted) {
           return;
@@ -127,6 +139,7 @@ export function DhuloStoreProvider({ children }: PropsWithChildren) {
         const parsed = JSON.parse(stored) as Partial<{
           appThemeId: ThemeId;
           appBackgroundStyle: AppBackgroundStyle;
+          ambientMotionEnabled: boolean;
           appearanceMode: string;
           profileName: string;
           profileBio: string;
@@ -135,6 +148,7 @@ export function DhuloStoreProvider({ children }: PropsWithChildren) {
           defaultDuration: number;
           defaultStyle: DecayStyle;
           autoEraseEnabled: boolean;
+          guideCompleted: boolean;
           hapticsEnabled: boolean;
           soundEnabled: boolean;
           finalDeleteAnimationEnabled: boolean;
@@ -150,6 +164,7 @@ export function DhuloStoreProvider({ children }: PropsWithChildren) {
               decayStyle: normalizeDecayStyle(note.decayStyle),
               durationMinutes: normalizeDuration(note.durationMinutes),
               isPreserved: Boolean(note.isPreserved),
+              isDraft: Boolean(note.isDraft),
               preservedProgress: typeof note.preservedProgress === 'number' ? note.preservedProgress : 0,
               title: typeof note.title === 'string' ? note.title : 'Untitled release',
               themeId: normalizeThemeId(note.themeId),
@@ -195,6 +210,14 @@ export function DhuloStoreProvider({ children }: PropsWithChildren) {
           setAutoEraseEnabled(false);
         }
 
+        if (typeof parsed.ambientMotionEnabled === 'boolean') {
+          setAmbientMotionEnabled(parsed.ambientMotionEnabled);
+        }
+
+        if (typeof parsed.guideCompleted === 'boolean') {
+          setGuideCompleted(parsed.guideCompleted);
+        }
+
         if (typeof parsed.hapticsEnabled === 'boolean') {
           setHapticsEnabled(parsed.hapticsEnabled);
         }
@@ -228,6 +251,7 @@ export function DhuloStoreProvider({ children }: PropsWithChildren) {
       JSON.stringify({
         appThemeId,
         appBackgroundStyle,
+        ambientMotionEnabled,
         profileName,
         profileBio,
         profileInitial,
@@ -235,6 +259,7 @@ export function DhuloStoreProvider({ children }: PropsWithChildren) {
         defaultDuration,
         defaultStyle,
         autoEraseEnabled,
+        guideCompleted,
         hapticsEnabled,
         soundEnabled,
         notes,
@@ -242,7 +267,7 @@ export function DhuloStoreProvider({ children }: PropsWithChildren) {
     ).catch(() => {
       // Local persistence can fail in private storage or low disk states. The in-memory app remains usable.
     });
-  }, [appBackgroundStyle, appThemeId, autoEraseEnabled, defaultDuration, defaultStyle, hapticsEnabled, hydrated, notes, profileAvatarUri, profileBio, profileInitial, profileName, soundEnabled]);
+  }, [ambientMotionEnabled, appBackgroundStyle, appThemeId, autoEraseEnabled, defaultDuration, defaultStyle, guideCompleted, hapticsEnabled, hydrated, notes, profileAvatarUri, profileBio, profileInitial, profileName, soundEnabled]);
 
   // Notes actions
   const addNote = useCallback((input: CreateNoteInput) => {
@@ -264,6 +289,57 @@ export function DhuloStoreProvider({ children }: PropsWithChildren) {
           preservedProgress: undefined,
         };
       })
+    );
+  }, []);
+
+  const updateNote = useCallback((id: string, input: CreateNoteInput) => {
+    setNotes((currentNotes) =>
+      currentNotes.map((note) =>
+        note.id === id
+          ? {
+              ...makeNote(input),
+              id,
+            }
+          : note
+      )
+    );
+  }, []);
+
+  const duplicateNote = useCallback((id: string) => {
+    setNotes((currentNotes) => {
+      const original = currentNotes.find((note) => note.id === id);
+
+      if (!original) {
+        return currentNotes;
+      }
+
+      return [
+        makeNote({
+          body: original.body,
+          decayStyle: original.decayStyle,
+          durationMinutes: original.durationMinutes,
+          imageUri: original.imageUri,
+          themeId: original.themeId,
+          title: `${original.title} copy`,
+        }),
+        ...currentNotes,
+      ];
+    });
+  }, []);
+
+  const extendNote = useCallback((id: string, minutes: number) => {
+    const safeMinutes = Math.max(1, Math.round(minutes));
+    setNotes((currentNotes) =>
+      currentNotes.map((note) =>
+        note.id === id
+          ? {
+              ...note,
+              durationMinutes: note.durationMinutes + safeMinutes,
+              isPreserved: false,
+              preservedProgress: undefined,
+            }
+          : note
+      )
     );
   }, []);
 
@@ -319,28 +395,36 @@ export function DhuloStoreProvider({ children }: PropsWithChildren) {
     notes,
     addNote,
     continueNote,
+    duplicateNote,
+    extendNote,
     preserveNote,
     quickBurnNote,
     removeNote,
     restartNote,
-  }), [notes, addNote, continueNote, preserveNote, quickBurnNote, removeNote, restartNote]);
+    updateNote,
+  }), [notes, addNote, continueNote, duplicateNote, extendNote, preserveNote, quickBurnNote, removeNote, restartNote, updateNote]);
 
   const settingsValue = useMemo<SettingsValue>(() => ({
     appThemeId,
     appBackgroundStyle,
+    ambientMotionEnabled,
     defaultDuration,
     defaultStyle,
     autoEraseEnabled,
+    guideCompleted,
     hapticsEnabled,
+    hydrated,
     soundEnabled,
     setAppThemeId,
     setAppBackgroundStyle,
+    setAmbientMotionEnabled,
     setDefaultDuration,
     setDefaultStyle,
     setAutoEraseEnabled,
+    setGuideCompleted,
     setHapticsEnabled,
     setSoundEnabled,
-  }), [appThemeId, appBackgroundStyle, defaultDuration, defaultStyle, autoEraseEnabled, hapticsEnabled, soundEnabled]);
+  }), [ambientMotionEnabled, appThemeId, appBackgroundStyle, defaultDuration, defaultStyle, autoEraseEnabled, guideCompleted, hapticsEnabled, hydrated, soundEnabled]);
 
   const profileValue = useMemo<ProfileValue>(() => ({
     profileName,

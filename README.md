@@ -9,9 +9,12 @@ You write a note, choose how long it should live, and let it slowly fall apart. 
 - Create temporary notes with text and optional images
 - Pick a lifespan for each note
 - Choose a decay style: ash, blur, drift, or scramble
-- Let expired notes disappear automatically, or turn that off and release them manually
+- Fast-forward a note to expiry, watch it decay live, then restore or release it
+- Save unfinished writing as drafts and reopen it later
+- Search, filter, sort, preserve, extend, duplicate, and share notes
 - Customize the app mood with themes and animated backgrounds
-- Keep everything local on the device
+- Learn the ritual through an optional first-launch guide
+- Keep notes and durable copies of attached photos local on the device
 
 ## Running It
 
@@ -50,4 +53,4 @@ npx expo-doctor
 
 ## Current State
 
-Working
+Ready for Expo Go testing. No release build has been created.

@@ -1,7 +1,7 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { StatusBar } from 'expo-status-bar';
 import { ComponentProps, ReactNode } from 'react';
-import { Alert, Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AmbientBackground } from '@/components/ambient-background';
@@ -11,16 +11,19 @@ import { DecayStyle, DHULO_THEMES, DhuloNote, ThemeId } from '@/lib/dhulo';
 import { formatDuration } from '@/utils/note';
 
 type Props = {
+  ambientMotionEnabled: boolean;
   autoEraseEnabled: boolean;
   defaultDuration: number;
   defaultStyle: DecayStyle;
   hapticsEnabled: boolean;
   notes: DhuloNote[];
   onAutoEraseChange: (enabled: boolean) => void;
+  onAmbientMotionChange: (enabled: boolean) => void;
   onBack: () => void;
   onDefaultDurationChange: (duration: number) => void;
   onDefaultStyleChange: (style: DecayStyle) => void;
   onHapticsChange: (enabled: boolean) => void;
+  onGuidePress: () => void;
   onPersonalizationPress: () => void;
   onSoundChange: (enabled: boolean) => void;
   soundEnabled: boolean;
@@ -28,16 +31,19 @@ type Props = {
 };
 
 export function SettingsScreen({
+  ambientMotionEnabled,
   autoEraseEnabled,
   defaultDuration,
   defaultStyle,
   hapticsEnabled,
   notes,
   onAutoEraseChange,
+  onAmbientMotionChange,
   onBack,
   onDefaultDurationChange,
   onDefaultStyleChange,
   onHapticsChange,
+  onGuidePress,
   onPersonalizationPress,
   onSoundChange,
   soundEnabled,
@@ -50,24 +56,10 @@ export function SettingsScreen({
     });
   }
 
-  async function rateApp() {
-    const androidUrl = 'market://details?id=com.swapnilxd.dhulo';
-    const webUrl = 'https://play.google.com/store/apps/details?id=com.swapnilxd.dhulo';
-    const iosUrl = 'itms-apps://itunes.apple.com/app/id0000000000?action=write-review';
-    const url = Platform.OS === 'ios' ? iosUrl : androidUrl;
-
-    if (await Linking.canOpenURL(url)) {
-      await Linking.openURL(url);
-      return;
-    }
-
-    await Linking.openURL(webUrl);
-  }
-
   function showPrivacy() {
     Alert.alert(
       'Privacy and local storage',
-      'Dhulo stores notes, settings, and profile details locally on this device. Notes are not uploaded by this app. Deleting the app or clearing app data removes local notes. Photos you attach stay referenced from device storage.'
+      'Dhulo stores notes, settings, profile details, and private copies of attached photos locally on this device. Nothing is uploaded by this app. Deleting the app or clearing app data removes this local content.'
     );
   }
 
@@ -114,11 +106,12 @@ export function SettingsScreen({
           <Section title="Feedback" theme={theme}>
             <ToggleRow label="Warm haptics" onValueChange={onHapticsChange} theme={theme} value={hapticsEnabled} />
             <ToggleRow label="Soft sound cues" onValueChange={onSoundChange} theme={theme} value={soundEnabled} />
+            <ToggleRow label="Ambient theme motion" onValueChange={onAmbientMotionChange} theme={theme} value={ambientMotionEnabled} />
           </Section>
 
           <Section title="Actions" theme={theme}>
             <ActionRow icon="palette" label="Personalisation" onPress={onPersonalizationPress} theme={theme} />
-            <ActionRow icon="star-border" label="Rate Dhulo" onPress={rateApp} theme={theme} />
+            <ActionRow icon="help-outline" label="Replay the guide" onPress={onGuidePress} theme={theme} />
             <ActionRow icon="ios-share" label="Share Dhulo" onPress={shareApp} theme={theme} />
             <ActionRow icon="privacy-tip" label="Privacy and local storage" onPress={showPrivacy} theme={theme} />
           </Section>
@@ -189,19 +182,24 @@ function ToggleRow({
   value: boolean;
 }) {
   return (
-    <Pressable accessibilityRole="switch" accessibilityState={{ checked: value }} onPress={() => onValueChange(!value)} style={[styles.row, { borderBottomColor: theme.border }]}>
+    <View style={[styles.row, { borderBottomColor: theme.border }]}>
       <Text style={[styles.rowLabel, { color: theme.text }]}>{label}</Text>
-      <View style={[styles.toggleTrack, { borderColor: value ? theme.accent : theme.border, backgroundColor: value ? theme.accent : 'transparent' }]}>
-        <View style={[styles.toggleKnob, { backgroundColor: value ? theme.background : theme.faint, marginLeft: value ? 25 : 0 }]} />
-      </View>
-    </Pressable>
+      <Switch
+        accessibilityLabel={label}
+        onValueChange={onValueChange}
+        thumbColor={theme.mode === 'dark' ? theme.text : undefined}
+        trackColor={{ false: theme.border, true: theme.accent }}
+        value={value}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   about: {
     alignItems: 'flex-start',
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 22,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 12,
@@ -212,7 +210,8 @@ const styles = StyleSheet.create({
   },
   aboutIcon: {
     alignItems: 'center',
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 12,
     height: 40,
     justifyContent: 'center',
     width: 40,
@@ -233,7 +232,8 @@ const styles = StyleSheet.create({
     paddingBottom: 44,
   },
   group: {
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 22,
     borderWidth: 1,
     gap: 14,
     padding: 16,
@@ -246,7 +246,8 @@ const styles = StyleSheet.create({
   },
   hero: {
     alignItems: 'center',
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 22,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 14,
@@ -257,7 +258,8 @@ const styles = StyleSheet.create({
   },
   heroIcon: {
     alignItems: 'center',
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 14,
     height: 48,
     justifyContent: 'center',
     width: 48,
@@ -314,7 +316,8 @@ const styles = StyleSheet.create({
   },
   rowIcon: {
     alignItems: 'center',
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 10,
     height: 32,
     justifyContent: 'center',
     width: 32,
@@ -344,18 +347,5 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '900',
     letterSpacing: 0,
-  },
-  toggleKnob: {
-    borderRadius: 999,
-    height: 24,
-    width: 24,
-  },
-  toggleTrack: {
-    borderRadius: 999,
-    borderWidth: 1,
-    height: 30,
-    justifyContent: 'center',
-    paddingHorizontal: 2,
-    width: 56,
   },
 });

@@ -1,7 +1,8 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AmbientBackground } from '@/components/ambient-background';
@@ -112,9 +113,13 @@ export function EditorScreen({
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.keyboard}>
           <View style={styles.header}>
-            <Pressable accessibilityLabel="Close editor" accessibilityRole="button" onPress={onBack} style={[styles.iconButton, { backgroundColor: theme.surface }]}>
+            <Pressable accessibilityLabel="Save draft and close editor" accessibilityRole="button" onPress={onBack} style={[styles.iconButton, { backgroundColor: theme.surface }]}>
               <MaterialIcons name="close" size={22} color={theme.text} />
             </Pressable>
+            <View style={styles.editorStatus}>
+              <Text style={[styles.editorStatusTitle, { color: theme.text }]}>New note</Text>
+              <Text style={[styles.editorStatusCaption, { color: theme.faint }]}>Close saves a draft</Text>
+            </View>
             <View style={styles.headerActions}>
               <Pressable accessibilityLabel="Note options" accessibilityRole="button" onPress={() => setSettingsOpen((open) => !open)} style={[styles.iconButton, { backgroundColor: theme.surface }]}>
                 <MaterialIcons name="tune" size={21} color={theme.text} />
@@ -217,23 +222,21 @@ function NoteOptionsSheet({
   theme: typeof DHULO_THEMES.obsidian;
   visible: boolean;
 }) {
-  const entrance = useRef(new Animated.Value(0)).current;
+  const entrance = useSharedValue(0);
 
   useEffect(() => {
-    Animated.timing(entrance, {
-      duration: visible ? 120 : 90,
-      toValue: visible ? 1 : 0,
-      useNativeDriver: true,
-    }).start();
+    entrance.value = withTiming(visible ? 1 : 0, {
+      duration: visible ? 220 : 160,
+      easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.quad),
+      reduceMotion: ReduceMotion.System,
+    });
   }, [entrance, visible]);
 
-  const backdropStyle = {
-    opacity: entrance.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
-  };
-  const sheetStyle = {
-    opacity: entrance,
-    transform: [{ translateY: entrance.interpolate({ inputRange: [0, 1], outputRange: [36, 0] }) }],
-  };
+  const backdropStyle = useAnimatedStyle(() => ({ opacity: entrance.value }));
+  const sheetStyle = useAnimatedStyle(() => ({
+    opacity: entrance.value,
+    transform: [{ translateY: (1 - entrance.value) * 36 }],
+  }));
 
   return (
     <View pointerEvents={visible ? 'auto' : 'none'} style={styles.sheetLayer}>
@@ -344,7 +347,8 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   imageWrap: {
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 20,
     height: 190,
     marginBottom: 8,
     marginTop: 16,
@@ -418,6 +422,20 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 0,
   },
+  editorStatus: {
+    alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: 8,
+  },
+  editorStatusCaption: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  editorStatusTitle: {
+    fontSize: 14,
+    fontWeight: '900',
+  },
   themeStrip: {
     flexDirection: 'row',
     gap: 10,
@@ -425,7 +443,8 @@ const styles = StyleSheet.create({
     paddingRight: 16,
   },
   themeChoice: {
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 18,
     borderWidth: 1,
     padding: 8,
     width: 74,

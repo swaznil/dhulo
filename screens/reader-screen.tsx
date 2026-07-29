@@ -1,12 +1,14 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
-import { ComponentProps } from 'react';
-import { ScrollView, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ComponentProps, useEffect, useRef, useState } from 'react';
+import { AccessibilityInfo, ScrollView, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AmbientBackground } from '@/components/ambient-background';
 import { DecayImage } from '@/components/dhulo/decay-image';
 import { DecayText } from '@/components/dhulo/decay-text';
+import { useSettings } from '@/context/dhulo-store';
 import { useGlobalTimer } from '@/hooks/use-global-timer';
 import { DHULO_THEMES, DhuloNote } from '@/lib/dhulo';
 import { READER_TIMER_MS } from '@/utils/animation';
@@ -18,15 +20,108 @@ type Props = {
   onBack: () => void;
   onContinue: () => void;
   onDelete: () => void;
+  onDuplicate: () => void;
+  onExtend: (minutes: number) => void;
   onPreserve: () => void;
   onQuickBurn: () => void;
+  onRestart: () => void;
 };
 
-export function ReaderScreen({ note, onBack, onContinue, onDelete, onPreserve, onQuickBurn }: Props) {
+export function ReaderScreen({
+  note,
+  onBack,
+  onContinue,
+  onDelete,
+  onDuplicate,
+  onExtend,
+  onPreserve,
+  onQuickBurn,
+  onRestart,
+}: Props) {
   const now = useGlobalTimer(READER_TIMER_MS);
+  const { hapticsEnabled } = useSettings();
   const theme = DHULO_THEMES[note.themeId];
   const { isGone, progress, remainingLabel } = useNoteDecay(note, now);
   const destroyCopy = getDestroyCopy(note.decayStyle);
+  const animationFrame = useRef<number | null>(null);
+  const lastVisualUpdate = useRef(0);
+  const [fastForwardProgress, setFastForwardProgress] = useState<number | null>(null);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const displayProgress = fastForwardProgress ?? progress;
+  const isFastForwarding = fastForwardProgress !== null;
+  const displayGone = isGone || displayProgress >= 1;
+  const displayRemaining = isFastForwarding
+    ? `Fast-forwarding · ${Math.round(displayProgress * 100)}%`
+    : displayGone
+      ? 'Expired · waiting for your choice'
+      : remainingLabel;
+
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+    const listener = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+    return () => listener.remove();
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (animationFrame.current !== null) {
+        cancelAnimationFrame(animationFrame.current);
+      }
+    },
+    []
+  );
+
+  function cancelFastForward() {
+    if (animationFrame.current !== null) {
+      cancelAnimationFrame(animationFrame.current);
+      animationFrame.current = null;
+    }
+    setFastForwardProgress(null);
+  }
+
+  function startFastForward() {
+    if (isFastForwarding || isGone) {
+      return;
+    }
+
+    const startedAt = performance.now();
+    const startingProgress = progress;
+    const duration = reduceMotion ? 650 : Math.max(2600, 4400 * (1 - startingProgress));
+    if (hapticsEnabled) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
+    }
+
+    const advance = (timestamp: number) => {
+      const elapsed = Math.min(1, (timestamp - startedAt) / duration);
+      const eased = 1 - Math.pow(1 - elapsed, 3);
+      const nextProgress = startingProgress + (1 - startingProgress) * eased;
+      if (timestamp - lastVisualUpdate.current >= 32 || elapsed >= 1) {
+        lastVisualUpdate.current = timestamp;
+        setFastForwardProgress(nextProgress);
+      }
+
+      if (elapsed < 1) {
+        animationFrame.current = requestAnimationFrame(advance);
+        return;
+      }
+
+      animationFrame.current = null;
+      setFastForwardProgress(null);
+      onQuickBurn();
+      if (hapticsEnabled) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => undefined);
+      }
+    };
+
+    animationFrame.current = requestAnimationFrame(advance);
+  }
+
+  function shareNote() {
+    Share.share({
+      message: [note.title, note.body].filter(Boolean).join('\n\n'),
+      title: note.title,
+    }).catch(() => undefined);
+  }
 
   return (
     <AmbientBackground theme={theme}>
@@ -37,7 +132,7 @@ export function ReaderScreen({ note, onBack, onContinue, onDelete, onPreserve, o
             <MaterialIcons name="arrow-back" size={22} color={theme.text} />
           </Pressable>
           <Text style={[styles.headerTitle, { color: theme.text }]}>{getDecayLabel(note.decayStyle)}</Text>
-          {isGone ? (
+          {displayGone ? (
             <Pressable accessibilityLabel={destroyCopy.action} accessibilityRole="button" onPress={onDelete} style={[styles.iconButton, { backgroundColor: theme.surface }]}>
               <MaterialIcons name={destroyCopy.icon} size={20} color={theme.text} />
             </Pressable>
@@ -49,19 +144,21 @@ export function ReaderScreen({ note, onBack, onContinue, onDelete, onPreserve, o
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <Text style={[styles.date, { color: theme.faint }]}>{formatTimestamp(note.createdAt)}</Text>
           <Text style={[styles.title, { color: theme.text }]}>{note.title}</Text>
-          <Text style={[styles.remaining, { color: theme.muted }]}>{remainingLabel}</Text>
+          <Text accessibilityLiveRegion="polite" style={[styles.remaining, { color: theme.muted }]}>
+            {displayRemaining}
+          </Text>
           <View style={[styles.progressRail, { backgroundColor: theme.surface }]}>
-            <View style={[styles.progressFill, { backgroundColor: isGone ? theme.secondary : theme.accent, width: `${progress * 100}%` }]} />
+            <View style={[styles.progressFill, { backgroundColor: displayGone ? theme.secondary : theme.accent, width: `${displayProgress * 100}%` }]} />
           </View>
 
           <View style={styles.page}>
-            <DecayImage accent={theme.accent} progress={progress} styleId={note.decayStyle} surface={theme.surface} uri={note.imageUri} />
+            <DecayImage accent={theme.accent} progress={displayProgress} styleId={note.decayStyle} surface={theme.surface} uri={note.imageUri} />
             <DecayText
               color={theme.text}
               lineHeight={30}
               mutedColor={theme.faint}
               now={now}
-              progress={progress}
+              progress={displayProgress}
               seed={`${note.id}-reader`}
               size={18}
               styleId={note.decayStyle}
@@ -69,18 +166,81 @@ export function ReaderScreen({ note, onBack, onContinue, onDelete, onPreserve, o
             />
           </View>
 
+          {displayGone ? (
+            <View style={[styles.expiredCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+              <View style={[styles.expiredIcon, { backgroundColor: theme.elevated }]}>
+                <MaterialIcons color={theme.secondary} name="hourglass-disabled" size={23} />
+              </View>
+              <View style={styles.expiredCopy}>
+                <Text style={[styles.expiredTitle, { color: theme.text }]}>This note has expired</Text>
+                <Text style={[styles.expiredText, { color: theme.muted }]}>
+                  Release it permanently, or restore it with a fresh lifetime.
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
           <View style={styles.actions}>
-            {note.isPreserved ? (
+            {displayGone ? (
+              <>
+                <ActionButton icon="restore" label="Restore note" onPress={onRestart} theme={theme} />
+                <ActionButton filled icon={destroyCopy.icon} label={destroyCopy.shortAction} onPress={onDelete} theme={theme} />
+              </>
+            ) : note.isPreserved ? (
               <ActionButton icon="play-arrow" label="Continue" onPress={onContinue} theme={theme} />
             ) : (
               <ActionButton icon="pause" label="Preserve" onPress={onPreserve} theme={theme} />
             )}
-            {!isGone ? <ActionButton icon="hourglass-bottom" label="Decay now" onPress={onQuickBurn} theme={theme} /> : null}
-            {isGone ? <ActionButton filled icon={destroyCopy.icon} label={destroyCopy.shortAction} onPress={onDelete} theme={theme} /> : null}
+            {!displayGone ? (
+              <ActionButton
+                icon={isFastForwarding ? 'close' : 'fast-forward'}
+                label={isFastForwarding ? 'Cancel fast-forward' : 'Decay now'}
+                onPress={isFastForwarding ? cancelFastForward : startFastForward}
+                theme={theme}
+              />
+            ) : null}
           </View>
+
+          {!displayGone && !isFastForwarding ? (
+            <View style={styles.quickActions}>
+              <Text style={[styles.quickLabel, { color: theme.faint }]}>MORE TIME</Text>
+              <View style={styles.quickRow}>
+                <MiniAction label="+1 hour" onPress={() => onExtend(60)} theme={theme} />
+                <MiniAction label="+1 day" onPress={() => onExtend(1440)} theme={theme} />
+                <MiniAction label="Duplicate" onPress={onDuplicate} theme={theme} />
+                <MiniAction label="Share" onPress={shareNote} theme={theme} />
+              </View>
+            </View>
+          ) : null}
         </ScrollView>
       </SafeAreaView>
     </AmbientBackground>
+  );
+}
+
+function MiniAction({
+  label,
+  onPress,
+  theme,
+}: {
+  label: string;
+  onPress: () => void;
+  theme: typeof DHULO_THEMES.obsidian;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.miniAction,
+        {
+          backgroundColor: theme.surface,
+          borderColor: theme.border,
+          opacity: pressed ? 0.65 : 1,
+        },
+      ]}>
+      <Text style={[styles.miniActionText, { color: theme.text }]}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -139,6 +299,36 @@ const styles = StyleSheet.create({
     padding: 22,
     paddingBottom: 50,
   },
+  expiredCard: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 20,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 13,
+    marginTop: 20,
+    padding: 15,
+  },
+  expiredCopy: {
+    flex: 1,
+    gap: 3,
+  },
+  expiredIcon: {
+    alignItems: 'center',
+    borderRadius: 14,
+    height: 46,
+    justifyContent: 'center',
+    width: 46,
+  },
+  expiredText: {
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 19,
+  },
+  expiredTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+  },
   date: {
     fontSize: 12,
     fontWeight: '900',
@@ -168,6 +358,17 @@ const styles = StyleSheet.create({
     marginTop: 16,
     minHeight: 280,
   },
+  miniAction: {
+    borderCurve: 'continuous',
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  miniActionText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
   progressFill: {
     height: '100%',
   },
@@ -181,6 +382,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     marginTop: 7,
+  },
+  quickActions: {
+    gap: 9,
+    marginTop: 24,
+  },
+  quickLabel: {
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.9,
+  },
+  quickRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   safeArea: {
     flex: 1,

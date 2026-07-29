@@ -51,7 +51,8 @@ export const DecayPreview = memo(function DecayPreview({ onSelect, selectedStyle
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 16,
     borderWidth: 1,
     minHeight: 94,
     padding: 13,

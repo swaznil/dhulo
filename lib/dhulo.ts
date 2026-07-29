@@ -21,6 +21,7 @@ export type DhuloNote = {
   durationMinutes: number;
   decayStyle: DecayStyle;
   themeId: ThemeId;
+  isDraft?: boolean;
   isPreserved?: boolean;
   preservedProgress?: number;
 };
@@ -53,19 +54,19 @@ export const DHULO_THEMES: Record<ThemeId, DhuloTheme> = {
   obsidian: {
     id: 'obsidian',
     name: 'Obsidian',
-    caption: 'Deep black, jade signal, quiet focus',
+    caption: 'Dark walnut, warm paper, quiet focus',
     mode: 'dark',
     backgroundStyle: 'void',
-    background: '#030405',
-    surface: '#101114',
-    elevated: '#1b1d22',
-    text: '#f4f6f8',
-    muted: '#a9b0ba',
-    faint: '#5e6672',
-    accent: '#43F0BE',
-    secondary: '#FFB86B',
-    border: '#252830',
-    shadow: '#000000',
+    background: '#120D0A',
+    surface: '#201712',
+    elevated: '#30221A',
+    text: '#FFF5E6',
+    muted: '#D4C0A9',
+    faint: '#8F7866',
+    accent: '#E9B86B',
+    secondary: '#EC7566',
+    border: '#463126',
+    shadow: '#080503',
   },
   graphite: {
     id: 'graphite',
@@ -285,6 +286,10 @@ export function getNoteProgress(note: DhuloNote, now: number) {
 }
 
 export function getRemainingLabel(note: DhuloNote, now: number) {
+  if (note.isDraft) {
+    return 'draft';
+  }
+
   if (note.isPreserved) {
     return 'preserved';
   }
@@ -319,6 +324,7 @@ export function makeNote(input: {
   durationMinutes: number;
   decayStyle: DecayStyle;
   themeId: ThemeId;
+  isDraft?: boolean;
   isPreserved?: boolean;
   preservedProgress?: number;
 }): DhuloNote {
@@ -331,6 +337,7 @@ export function makeNote(input: {
     durationMinutes: input.durationMinutes,
     decayStyle: input.decayStyle,
     themeId: normalizeThemeId(input.themeId),
+    isDraft: input.isDraft,
     isPreserved: input.isPreserved,
     preservedProgress: input.preservedProgress,
   };

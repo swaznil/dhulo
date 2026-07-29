@@ -5,9 +5,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, BackHandler } from 'react-native';
 
 import { FinalDeleteAnimation } from '@/components/final-delete-animation';
+import { GuideOverlay } from '@/components/guide-overlay';
 import { useNotes, useProfile, useSettings } from '@/context/dhulo-store';
 import { useGlobalTimer } from '@/hooks/use-global-timer';
 import { DecayStyle, DhuloNote, getNoteProgress, ThemeId } from '@/lib/dhulo';
+import { persistPickedImage } from '@/lib/image-storage';
 import { EditorScreen } from '@/screens/editor-screen';
 import { HomeScreen } from '@/screens/home-screen';
 import { ProfileScreen } from '@/screens/profile-screen';
@@ -17,20 +19,24 @@ import { SettingsScreen } from '@/screens/settings-screen';
 type ScreenMode = 'home' | 'editor' | 'reader' | 'profile' | 'settings';
 
 export default function DhuloScreen() {
-  const { addNote, continueNote, notes, preserveNote, removeNote } = useNotes();
+  const { addNote, continueNote, duplicateNote, extendNote, notes, preserveNote, quickBurnNote, removeNote, restartNote, updateNote } = useNotes();
   const {
     appBackgroundStyle,
     appThemeId,
+    ambientMotionEnabled,
     autoEraseEnabled,
     defaultDuration,
     defaultStyle,
+    guideCompleted,
     hapticsEnabled,
     soundEnabled,
     setAppBackgroundStyle,
     setAppThemeId,
+    setAmbientMotionEnabled,
     setAutoEraseEnabled,
     setDefaultDuration,
     setDefaultStyle,
+    setGuideCompleted,
     setHapticsEnabled,
     setSoundEnabled,
   } = useSettings();
@@ -45,6 +51,7 @@ export default function DhuloScreen() {
   const [draftDuration, setDraftDuration] = useState(defaultDuration);
   const [draftStyle, setDraftStyle] = useState<DecayStyle>(defaultStyle);
   const [draftThemeId, setDraftThemeId] = useState<ThemeId>(appThemeId);
+  const [draftNoteId, setDraftNoteId] = useState<string | null>(null);
   const [finaleNote, setFinaleNote] = useState<DhuloNote | null>(null);
   const afterFinalDeleteRef = useRef<(() => void) | null>(null);
   const releaseCue = useAudioPlayer(require('@/assets/sounds/soft-release.wav'), { keepAudioSessionActive: false });
@@ -109,6 +116,7 @@ export default function DhuloScreen() {
   }, [autoEraseEnabled, autoEraseNow, finaleNote, notes, requestDelete]);
 
   const startNewNote = useCallback(() => {
+    setDraftNoteId(null);
     setDraftTitle('');
     setDraftBody('');
     setDraftImageUri(undefined);
@@ -133,7 +141,14 @@ export default function DhuloScreen() {
     });
 
     if (!result.canceled) {
-      setDraftImageUri(result.assets[0]?.uri);
+      const selectedUri = result.assets[0]?.uri;
+      if (selectedUri) {
+        try {
+          setDraftImageUri(persistPickedImage(selectedUri, 'note'));
+        } catch {
+          Alert.alert('Could not save photo', 'The image was selected, but Dhulo could not keep a durable local copy.');
+        }
+      }
     }
   }, []);
 
@@ -153,33 +168,64 @@ export default function DhuloScreen() {
     });
 
     if (!result.canceled) {
-      setProfileAvatarUri(result.assets[0]?.uri);
+      const selectedUri = result.assets[0]?.uri;
+      if (selectedUri) {
+        try {
+          setProfileAvatarUri(persistPickedImage(selectedUri, 'profile'));
+        } catch {
+          Alert.alert('Could not save photo', 'Dhulo could not keep a durable local copy of that image.');
+        }
+      }
     }
   }, [setProfileAvatarUri]);
 
   const saveDraft = useCallback(
-    (preserve = false) => {
+    (asDraft = false) => {
       if (!draftTitle.trim() && !draftBody.trim() && !draftImageUri) {
+        if (draftNoteId) {
+          removeNote(draftNoteId);
+        }
         setMode('home');
         return;
       }
 
-      addNote({
+      const input = {
         body: draftBody,
         decayStyle: draftStyle,
         durationMinutes: draftDuration,
         imageUri: draftImageUri,
-        isPreserved: preserve,
-        preservedProgress: preserve ? 0 : undefined,
+        isDraft: asDraft,
+        isPreserved: asDraft,
+        preservedProgress: asDraft ? 0 : undefined,
         themeId: draftThemeId,
         title: draftTitle || draftBody.split('\n')[0] || 'Untitled note',
-      });
+      };
+
+      if (draftNoteId) {
+        updateNote(draftNoteId, input);
+      } else {
+        addNote(input);
+      }
+
+      setDraftNoteId(null);
       setMode('home');
     },
-    [addNote, draftBody, draftDuration, draftImageUri, draftStyle, draftThemeId, draftTitle]
+    [addNote, draftBody, draftDuration, draftImageUri, draftNoteId, draftStyle, draftThemeId, draftTitle, removeNote, updateNote]
   );
 
   const openReader = useCallback((note: DhuloNote) => {
+    if (note.isDraft) {
+      setDraftNoteId(note.id);
+      setDraftTitle(note.title === 'Untitled note' ? '' : note.title);
+      setDraftBody(note.body);
+      setDraftImageUri(note.imageUri);
+      setDraftDuration(note.durationMinutes);
+      setDraftStyle(note.decayStyle);
+      setDraftThemeId(note.themeId);
+      setMode('editor');
+      return;
+    }
+
     setReaderNoteId(note.id);
     setMode('reader');
   }, []);
@@ -226,6 +272,19 @@ export default function DhuloScreen() {
     return () => subscription.remove();
   }, [closeProfile, closeReader, mode, saveDraft]);
 
+  if (!guideCompleted) {
+    return (
+      <GuideOverlay
+        onComplete={() => setGuideCompleted(true)}
+        onCreateNote={() => {
+          setGuideCompleted(true);
+          startNewNote();
+        }}
+        themeId={appThemeId}
+      />
+    );
+  }
+
   if (mode === 'editor') {
     return (
       <EditorScreen
@@ -256,8 +315,14 @@ export default function DhuloScreen() {
           onBack={closeReader}
           onContinue={() => continueNote(readerNote.id)}
           onDelete={() => requestDelete(readerNote, closeReader)}
+          onDuplicate={() => {
+            duplicateNote(readerNote.id);
+            closeReader();
+          }}
+          onExtend={(minutes) => extendNote(readerNote.id, minutes)}
           onPreserve={() => preserveNote(readerNote.id)}
-          onQuickBurn={() => requestDelete(readerNote, closeReader)}
+          onQuickBurn={() => quickBurnNote(readerNote.id)}
+          onRestart={() => restartNote(readerNote.id)}
         />
         {finaleNote ? <FinalDeleteAnimation note={finaleNote} onFinish={completeDelete} /> : null}
       </>
@@ -268,15 +333,21 @@ export default function DhuloScreen() {
     return (
       <SettingsScreen
         autoEraseEnabled={autoEraseEnabled}
+        ambientMotionEnabled={ambientMotionEnabled}
         defaultDuration={defaultDuration}
         defaultStyle={defaultStyle}
         hapticsEnabled={hapticsEnabled}
         notes={notes}
         onAutoEraseChange={setAutoEraseEnabled}
+        onAmbientMotionChange={setAmbientMotionEnabled}
         onBack={() => setMode('home')}
         onDefaultDurationChange={setDefaultDuration}
         onDefaultStyleChange={setDefaultStyle}
         onHapticsChange={setHapticsEnabled}
+        onGuidePress={() => {
+          setGuideCompleted(false);
+          setMode('home');
+        }}
         onPersonalizationPress={() => openProfile('settings')}
         onSoundChange={setSoundEnabled}
         soundEnabled={soundEnabled}
@@ -312,7 +383,6 @@ export default function DhuloScreen() {
         appBackgroundStyle={appBackgroundStyle}
         notes={notes}
         onCreateNote={startNewNote}
-        onDestroyNote={requestDelete}
         onOpenNote={openReader}
         onOpenProfile={() => openProfile('home')}
         onOpenSettings={() => setMode('settings')}

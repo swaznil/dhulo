@@ -1,8 +1,9 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { FlashList } from '@shopify/flash-list';
+import { Image as ExpoImage } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { memo, useCallback, useMemo, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AmbientBackground } from '@/components/ambient-background';
@@ -16,7 +17,6 @@ type Props = {
   appBackgroundStyle: AppBackgroundStyle;
   notes: DhuloNote[];
   onCreateNote: () => void;
-  onDestroyNote: (note: DhuloNote) => void;
   onOpenNote: (note: DhuloNote) => void;
   onOpenProfile: () => void;
   onOpenSettings: () => void;
@@ -25,11 +25,21 @@ type Props = {
   resolvedThemeId: ThemeId;
 };
 
+type HomeFilter = 'all' | 'active' | 'preserved' | 'expired';
+type HomeSort = 'ending' | 'newest';
+
+const FILTERS: { id: HomeFilter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'active', label: 'Active' },
+  { id: 'preserved', label: 'Preserved' },
+  { id: 'expired', label: 'Expired' },
+];
+const brandMark = require('@/assets/images/brand-mark.png');
+
 export const HomeScreen = memo(function HomeScreen({
   appBackgroundStyle,
   notes,
   onCreateNote,
-  onDestroyNote,
   onOpenNote,
   onOpenProfile,
   onOpenSettings,
@@ -39,24 +49,42 @@ export const HomeScreen = memo(function HomeScreen({
 }: Props) {
   const now = useGlobalTimer(HOME_TIMER_MS);
   const theme = DHULO_THEMES[resolvedThemeId];
+  const { width } = useWindowDimensions();
   const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<HomeFilter>('all');
+  const [sort, setSort] = useState<HomeSort>('ending');
+  const columnCount = width >= 720 ? 2 : 1;
 
   const filteredNotes = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
+    const visible = notes.filter((note) => {
+      const progress = getNoteProgress(note, now);
+      const matchesQuery = !normalizedQuery || `${note.title} ${note.body}`.toLowerCase().includes(normalizedQuery);
+      const matchesFilter =
+        filter === 'all' ||
+        (filter === 'active' && progress < 1 && !note.isPreserved && !note.isDraft) ||
+        (filter === 'preserved' && note.isPreserved && !note.isDraft) ||
+        (filter === 'expired' && progress >= 1);
+      return matchesQuery && matchesFilter;
+    });
 
-    if (!normalizedQuery) {
-      return notes;
-    }
+    return [...visible].sort((a, b) => {
+      if (sort === 'newest') {
+        return b.createdAt - a.createdAt;
+      }
 
-    return notes.filter((note) => `${note.title} ${note.body}`.toLowerCase().includes(normalizedQuery));
-  }, [notes, query]);
+      const aExpiry = a.isPreserved ? Number.POSITIVE_INFINITY : a.createdAt + a.durationMinutes * 60_000;
+      const bExpiry = b.isPreserved ? Number.POSITIVE_INFINITY : b.createdAt + b.durationMinutes * 60_000;
+      return aExpiry - bExpiry;
+    });
+  }, [filter, notes, now, query, sort]);
 
   const goneCount = useMemo(() => notes.filter((note) => getNoteProgress(note, now) >= 1).length, [notes, now]);
   const aliveCount = notes.length - goneCount;
 
   const renderNote = useCallback(
-    ({ item }: { item: DhuloNote }) => <NoteCard note={item} now={now} onDestroy={onDestroyNote} onPress={onOpenNote} />,
-    [now, onDestroyNote, onOpenNote]
+    ({ item }: { item: DhuloNote }) => <NoteCard note={item} now={now} onPress={onOpenNote} />,
+    [now, onOpenNote]
   );
 
   return (
@@ -68,7 +96,10 @@ export const HomeScreen = memo(function HomeScreen({
             {profileAvatarUri ? <Image source={{ uri: profileAvatarUri }} style={styles.avatarImage} /> : <Text style={[styles.avatarText, { color: theme.background }]}>{profileInitial || 'D'}</Text>}
           </Pressable>
           <View style={styles.titleBlock}>
-            <Text style={[styles.title, { color: theme.text }]}>Dhulo</Text>
+            <View style={styles.brandLockup}>
+              <ExpoImage contentFit="contain" source={brandMark} style={styles.brandMark} />
+              <Text style={[styles.title, { color: theme.text }]}>Dhulo</Text>
+            </View>
             <Text style={[styles.subtitle, { color: theme.faint }]}>Temporary journal</Text>
           </View>
           <Pressable accessibilityLabel="Open settings" accessibilityRole="button" onPress={onOpenSettings} style={[styles.iconButton, { backgroundColor: theme.surface }]}>
@@ -85,22 +116,65 @@ export const HomeScreen = memo(function HomeScreen({
             style={[styles.searchInput, { color: theme.text }]}
             value={query}
           />
+          {query ? (
+            <Pressable accessibilityLabel="Clear search" hitSlop={10} onPress={() => setQuery('')}>
+              <MaterialIcons color={theme.faint} name="close" size={19} />
+            </Pressable>
+          ) : null}
         </View>
 
         {notes.length ? (
-          <View style={styles.statusRow}>
-            <Text style={[styles.statusText, { color: theme.faint }]}>{aliveCount} fading</Text>
-            <View style={[styles.statusDot, { backgroundColor: theme.border }]} />
-            <Text style={[styles.statusText, { color: theme.faint }]}>{goneCount} gone</Text>
+          <View>
+            <ScrollView contentContainerStyle={styles.filters} horizontal showsHorizontalScrollIndicator={false}>
+              {FILTERS.map((option) => {
+                const selected = filter === option.id;
+                return (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    key={option.id}
+                    onPress={() => setFilter(option.id)}
+                    style={[
+                      styles.filterChip,
+                      {
+                        backgroundColor: selected ? theme.text : theme.surface,
+                        borderColor: selected ? theme.text : theme.border,
+                      },
+                    ]}>
+                    <Text style={[styles.filterText, { color: selected ? theme.background : theme.muted }]}>
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+              <Pressable
+                accessibilityLabel={`Sort by ${sort === 'ending' ? 'newest' : 'ending soon'}`}
+                accessibilityRole="button"
+                onPress={() => setSort((current) => (current === 'ending' ? 'newest' : 'ending'))}
+                style={[styles.sortChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <MaterialIcons color={theme.muted} name="sort" size={16} />
+                <Text style={[styles.filterText, { color: theme.muted }]}>
+                  {sort === 'ending' ? 'Ending soon' : 'Newest'}
+                </Text>
+              </Pressable>
+            </ScrollView>
+            <View style={styles.statusRow}>
+              <Text style={[styles.statusText, { color: theme.faint }]}>{aliveCount} active</Text>
+              <View style={[styles.statusDot, { backgroundColor: theme.border }]} />
+              <Text style={[styles.statusText, { color: theme.faint }]}>{goneCount} expired</Text>
+            </View>
           </View>
         ) : null}
 
         <FlashList
-          ListEmptyComponent={<EmptyState hasQuery={Boolean(query.trim())} theme={theme} />}
+          ListEmptyComponent={
+            <EmptyState filtered={Boolean(query.trim()) || filter !== 'all'} onCreate={onCreateNote} theme={theme} />
+          }
           contentContainerStyle={styles.listContent}
           data={filteredNotes}
           keyExtractor={(item) => item.id}
-          numColumns={2}
+          key={`notes-${columnCount}`}
+          numColumns={columnCount}
           renderItem={renderNote}
           showsVerticalScrollIndicator={false}
         />
@@ -124,7 +198,15 @@ export const HomeScreen = memo(function HomeScreen({
   );
 });
 
-function EmptyState({ hasQuery, theme }: { hasQuery: boolean; theme: typeof DHULO_THEMES.obsidian }) {
+function EmptyState({
+  filtered,
+  onCreate,
+  theme,
+}: {
+  filtered: boolean;
+  onCreate: () => void;
+  theme: typeof DHULO_THEMES.obsidian;
+}) {
   return (
     <View style={styles.emptyWrap}>
       <View style={[styles.emptyBook, { backgroundColor: theme.surface }]}>
@@ -132,8 +214,24 @@ function EmptyState({ hasQuery, theme }: { hasQuery: boolean; theme: typeof DHUL
         <View style={[styles.emptyLine, { backgroundColor: theme.border, width: '52%' }]} />
         <View style={[styles.emptyLine, { backgroundColor: theme.border, width: '38%' }]} />
       </View>
-      <Text style={[styles.emptyTitle, { color: theme.text }]}>{hasQuery ? 'Nothing found' : 'Nothing here lasts forever'}</Text>
-      <Text style={[styles.emptyText, { color: theme.muted }]}>{hasQuery ? 'Try a softer word.' : 'Write freely, then let the note decide how long it needs to stay.'}</Text>
+      <Text style={[styles.emptyTitle, { color: theme.text }]}>
+        {filtered ? 'Nothing matches' : 'Nothing here lasts forever'}
+      </Text>
+      <Text style={[styles.emptyText, { color: theme.muted }]}>
+        {filtered ? 'Try another filter or a softer word.' : 'Write freely, then choose how long the thought needs to stay.'}
+      </Text>
+      {!filtered ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={onCreate}
+          style={({ pressed }) => [
+            styles.emptyButton,
+            { backgroundColor: theme.text, opacity: pressed ? 0.72 : 1 },
+          ]}>
+          <MaterialIcons color={theme.background} name="edit" size={18} />
+          <Text style={[styles.emptyButtonText, { color: theme.background }]}>Write a note</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -156,7 +254,8 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   emptyBook: {
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 24,
     gap: 13,
     height: 150,
     justifyContent: 'center',
@@ -172,6 +271,29 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginTop: 8,
     textAlign: 'center',
+  },
+  brandLockup: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+  },
+  brandMark: {
+    height: 34,
+    width: 34,
+  },
+  emptyButton: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 17,
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 20,
+    paddingHorizontal: 19,
+    paddingVertical: 13,
+  },
+  emptyButtonText: {
+    fontSize: 14,
+    fontWeight: '900',
   },
   emptyTitle: {
     fontSize: 22,
@@ -199,6 +321,22 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     width: 66,
   },
+  filterChip: {
+    borderCurve: 'continuous',
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+  },
+  filterText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  filters: {
+    gap: 8,
+    paddingHorizontal: 22,
+    paddingTop: 14,
+  },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -223,7 +361,8 @@ const styles = StyleSheet.create({
   },
   searchBar: {
     alignItems: 'center',
-    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderRadius: 18,
     flexDirection: 'row',
     gap: 12,
     height: 54,
@@ -236,6 +375,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     letterSpacing: 0,
+  },
+  sortChip: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
   },
   statusDot: {
     borderRadius: 999,

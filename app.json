@@ -1,20 +1,19 @@
 {
   "expo": {
-    "name": "dhulo",
+    "name": "Dhulo",
     "slug": "dhulo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/icon-v2.png",
     "scheme": "dhulo",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/icon-v2.png"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#CCAB82",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
+        "backgroundColor": "#9B5F32",
+        "foregroundImage": "./assets/images/brand-mark.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
@@ -22,21 +21,33 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icon-v2.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#CCAB82",
+          "backgroundColor": "#241913",
+          "image": "./assets/images/brand-mark.png",
+          "imageWidth": 180,
+          "dark": {
+            "backgroundColor": "#120D0A",
+            "image": "./assets/images/brand-mark.png"
+          },
           "android": {
-            "image": "./assets/images/splash-icon.png",
-            "imageWidth": 76
+            "image": "./assets/images/brand-mark.png",
+            "imageWidth": 180
           }
         }
       ],
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
       "expo-font",
       "expo-asset"
     ],
