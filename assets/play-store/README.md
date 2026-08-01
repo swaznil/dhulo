@@ -18,8 +18,8 @@ Upload-ready artwork is in `final/`.
 1. `09-write-fade-release-16x9.png`
 2. `10-softer-way-16x9.png`
 
-The `raw/` folder contains the authentic app captures used in the artwork. Run
-`python build_store_graphics.py` from any directory to rebuild the final set.
+The local, gitignored `raw/` folder contains the authentic app captures used to
+produce the artwork. Only the upload-ready final exports are kept in Git.
 
 The 16:9 files are landscape promotional/tablet artwork. Google Play's separate
 feature-graphic slot uses 1024 × 500, so these should not be substituted into

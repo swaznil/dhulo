@@ -52,5 +52,4 @@ example
 
 # generated marketing QA previews (final store artwork stays tracked)
 /assets/play-store/preview-*.png
-/assets/play-store/raw/*contact-sheet*.png
-/assets/play-store/raw/*check*.png
+/assets/play-store/raw/
