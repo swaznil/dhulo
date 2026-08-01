@@ -60,7 +60,7 @@ export function FinalDeleteAnimation({ note, onFinish }: { note: DhuloNote; onFi
       };
     }
 
-    if (note.decayStyle === 'blur') {
+    if (note.decayStyle === 'redact') {
       return {
         opacity: interpolate(value, [0, 0.44, 1], [1, 0.5, 0], Extrapolation.CLAMP),
         transform: [
@@ -100,7 +100,7 @@ export function FinalDeleteAnimation({ note, onFinish }: { note: DhuloNote; onFi
         ]}>
         {note.imageUri ? (
           <Image
-            blurRadius={note.decayStyle === 'blur' ? 14 : 2}
+            blurRadius={2}
             contentFit="cover"
             source={{ uri: note.imageUri }}
             style={styles.image}

@@ -21,7 +21,6 @@ type Props = {
   onOpenProfile: () => void;
   onOpenSettings: () => void;
   profileAvatarUri?: string;
-  profileInitial: string;
   resolvedThemeId: ThemeId;
 };
 
@@ -44,7 +43,6 @@ export const HomeScreen = memo(function HomeScreen({
   onOpenProfile,
   onOpenSettings,
   profileAvatarUri,
-  profileInitial,
   resolvedThemeId,
 }: Props) {
   const now = useGlobalTimer(HOME_TIMER_MS);
@@ -93,13 +91,10 @@ export const HomeScreen = memo(function HomeScreen({
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <Pressable accessibilityLabel="Open profile" accessibilityRole="button" onPress={onOpenProfile} style={[styles.avatar, { backgroundColor: theme.secondary }]}>
-            {profileAvatarUri ? <Image source={{ uri: profileAvatarUri }} style={styles.avatarImage} /> : <Text style={[styles.avatarText, { color: theme.background }]}>{profileInitial || 'D'}</Text>}
+            {profileAvatarUri ? <Image source={{ uri: profileAvatarUri }} style={styles.avatarImage} /> : <ExpoImage contentFit="contain" source={brandMark} style={styles.avatarLogo} />}
           </Pressable>
           <View style={styles.titleBlock}>
-            <View style={styles.brandLockup}>
-              <ExpoImage contentFit="contain" source={brandMark} style={styles.brandMark} />
-              <Text style={[styles.title, { color: theme.text }]}>Dhulo  </Text>
-            </View>
+            <Text style={[styles.title, { color: theme.text }]}>Dhulo</Text>
             <Text style={[styles.subtitle, { color: theme.faint }]}>Thoughts meant to fade</Text>
           </View>
           <Pressable accessibilityLabel="Open settings" accessibilityRole="button" onPress={onOpenSettings} style={[styles.iconButton, { backgroundColor: theme.surface }]}>
@@ -261,9 +256,9 @@ const styles = StyleSheet.create({
     height: '100%',
     width: '100%',
   },
-  avatarText: {
-    fontSize: 18,
-    fontWeight: '900',
+  avatarLogo: {
+    height: 32,
+    width: 32,
   },
   comfortCard: {
     borderCurve: 'continuous',
@@ -306,15 +301,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginTop: 8,
     textAlign: 'center',
-  },
-  brandLockup: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-  },
-  brandMark: {
-    height: 34,
-    width: 34,
   },
   emptyButton: {
     alignItems: 'center',

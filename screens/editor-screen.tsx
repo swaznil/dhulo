@@ -193,18 +193,17 @@ export function EditorScreen({
           />
         )}
 
-          {settingsOpen ? (
-            <NoteOptionsSheet
-              duration={duration}
-              noteThemeId={noteThemeId}
-              onClose={() => setSettingsOpen(false)}
-              onDurationChange={onDurationChange}
-              onStyleChange={onStyleChange}
-              onThemeChange={onThemeChange}
-              styleId={styleId}
-              theme={theme}
-            />
-          ) : null}
+          <NoteOptionsSheet
+            duration={duration}
+            noteThemeId={noteThemeId}
+            onClose={() => setSettingsOpen(false)}
+            onDurationChange={onDurationChange}
+            onStyleChange={onStyleChange}
+            onThemeChange={onThemeChange}
+            styleId={styleId}
+            theme={theme}
+            visible={settingsOpen}
+          />
         </KeyboardAvoidingView>
       </SafeAreaView>
     </AmbientBackground>
@@ -220,6 +219,7 @@ function NoteOptionsSheet({
   onThemeChange,
   styleId,
   theme,
+  visible,
 }: {
   duration: number;
   noteThemeId: ThemeId;
@@ -229,9 +229,14 @@ function NoteOptionsSheet({
   onThemeChange: (themeId: ThemeId) => void;
   styleId: DecayStyle;
   theme: typeof DHULO_THEMES.obsidian;
+  visible: boolean;
 }) {
   return (
-    <View style={styles.sheetLayer}>
+    <View
+      accessibilityElementsHidden={!visible}
+      importantForAccessibility={visible ? 'yes' : 'no-hide-descendants'}
+      pointerEvents={visible ? 'auto' : 'none'}
+      style={[styles.sheetLayer, { opacity: visible ? 1 : 0 }]}>
       <View pointerEvents="none" style={styles.sheetBackdrop} />
       <Pressable accessibilityLabel="Close note options" onPress={onClose} style={StyleSheet.absoluteFill} />
       <View style={[styles.sheet, { backgroundColor: theme.surface, borderColor: theme.border }]}>

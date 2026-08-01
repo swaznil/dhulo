@@ -1,4 +1,4 @@
-export type DecayStyle = 'ash' | 'blur' | 'drift' | 'scramble';
+export type DecayStyle = 'ash' | 'redact' | 'drift' | 'scramble';
 
 export type ThemeId =
   | 'obsidian'
@@ -244,12 +244,12 @@ export function normalizeThemeId(themeId?: string): ThemeId {
 }
 
 export function normalizeDecayStyle(style?: string): DecayStyle {
-  if (style === 'ash' || style === 'blur' || style === 'drift' || style === 'scramble') {
+  if (style === 'ash' || style === 'redact' || style === 'drift' || style === 'scramble') {
     return style;
   }
 
-  if (style === 'glitch') {
-    return 'blur';
+  if (style === 'blur' || style === 'glitch') {
+    return 'redact';
   }
 
   if (style === 'ember' || style === 'erase' || style === 'bleed') {
@@ -266,7 +266,7 @@ export function normalizeDecayStyle(style?: string): DecayStyle {
 export const DECAY_OPTIONS: DecayOption[] = [
   { id: 'ash', name: 'Ash', caption: 'Burns away from the edges.' },
   { id: 'drift', name: 'Drift', caption: 'Letters move apart.' },
-  { id: 'blur', name: 'Blur', caption: 'Slowly loses focus.' },
+  { id: 'redact', name: 'Redact', caption: 'Covers the words for good.' },
   { id: 'scramble', name: 'Scramble', caption: 'Letters swap places.' },
 ];
 
@@ -372,7 +372,7 @@ export function createSeedNotes(now: number): DhuloNote[] {
         'Let this thought be true for a while. Let it loosen. Let it become less important without being judged.',
       createdAt: now - 9 * 60 * 1000,
       durationMinutes: 45,
-      decayStyle: 'blur',
+      decayStyle: 'redact',
       themeId: 'moss',
     },
   ];
@@ -459,7 +459,24 @@ export function decayText(text: string, progress: number, style: DecayStyle, see
       .join('');
   }
 
-  const vanishAt = style === 'ash' ? amount * 0.72 : amount * 0.42;
+  if (style === 'redact') {
+    return Array.from(text)
+      .map((character, index) => {
+        if (character === '\n' || character === ' ') {
+          return character;
+        }
+
+        const stableNoise = seededNoise(seed, index);
+        if (stableNoise < amount * 1.22) {
+          return stableNoise < amount * 0.74 ? '█' : '▓';
+        }
+
+        return character;
+      })
+      .join('');
+  }
+
+  const vanishAt = amount * 0.72;
 
   return Array.from(text)
     .map((character, index) => {
@@ -478,18 +495,6 @@ export function decayText(text: string, progress: number, style: DecayStyle, see
         if (stableNoise < amount * 0.96 || (amount > 0.58 && index % 11 === 0)) {
           return ASH_CHARS[Math.floor(motionNoise * ASH_CHARS.length)];
         }
-        return character;
-      }
-
-      if (style === 'blur') {
-        if (stableNoise < amount * 0.28) {
-          return character.toLowerCase();
-        }
-
-        if (motionNoise < amount * 0.2) {
-          return character === character.toUpperCase() ? character.toLowerCase() : character;
-        }
-
         return character;
       }
 

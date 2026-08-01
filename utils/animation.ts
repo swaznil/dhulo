@@ -1,6 +1,6 @@
 export const FINAL_DELETE_DURATION = {
   ash: 1450,
-  blur: 1250,
+  redact: 1250,
   drift: 1250,
   scramble: 1180,
 } as const;

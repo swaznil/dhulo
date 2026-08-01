@@ -21,14 +21,12 @@ function DecayImageInner({ uri, progress, styleId, accent, surface }: DecayImage
 
   const decay = clamp(progress);
   const blur =
-    styleId === 'blur'
-      ? decay * 30
-      : styleId === 'ash'
+    styleId === 'ash'
         ? decay * 3
         : styleId === 'scramble'
           ? decay * 9
         : decay * 5;
-  const pixelOpacity = styleId === 'drift' ? decay * 0.42 : styleId === 'blur' ? decay * 0.18 : decay * 0.68;
+  const pixelOpacity = styleId === 'drift' ? decay * 0.42 : styleId === 'redact' ? Math.min(0.96, decay * 1.1) : decay * 0.68;
 
   return (
     <View style={[styles.frame, { backgroundColor: surface }]}>
@@ -71,7 +69,7 @@ function DecayImageInner({ uri, progress, styleId, accent, surface }: DecayImage
           <View style={[styles.emberGlow, { opacity: decay * 0.5 }]} />
         </View>
       ) : null}
-      {styleId === 'blur' ? (
+      {styleId === 'redact' ? (
         <View style={styles.scanLayer} pointerEvents="none">
           {SCAN_LINES.map((line) => (
             <View
@@ -80,7 +78,7 @@ function DecayImageInner({ uri, progress, styleId, accent, surface }: DecayImage
                 styles.scanLine,
                 {
                   backgroundColor: line % 2 === 0 ? accent : surface,
-                  opacity: decay * 0.16,
+                  opacity: decay * 0.34,
                   top: `${line * 10 + ((decay * 17) % 8)}%`,
                 },
               ]}
@@ -88,7 +86,7 @@ function DecayImageInner({ uri, progress, styleId, accent, surface }: DecayImage
           ))}
         </View>
       ) : null}
-      <View style={[styles.wash, { opacity: decay * (styleId === 'ash' ? 0.3 : 0.4), backgroundColor: surface }]} />
+      <View style={[styles.wash, { opacity: decay * (styleId === 'ash' ? 0.3 : styleId === 'redact' ? 0.7 : 0.4), backgroundColor: surface }]} />
     </View>
   );
 }

@@ -40,7 +40,7 @@ export default function DhuloScreen() {
     setHapticsEnabled,
     setSoundEnabled,
   } = useSettings();
-  const { profileAvatarUri, profileBio, profileInitial, profileName, setProfileAvatarUri, setProfileBio, setProfileName } = useProfile();
+  const { profileAvatarUri, profileBio, profileName, setProfileAvatarUri, setProfileBio, setProfileName } = useProfile();
   const autoEraseNow = useGlobalTimer(3000);
   const [mode, setMode] = useState<ScreenMode>('home');
   const [profileReturnMode, setProfileReturnMode] = useState<ScreenMode>('home');
@@ -375,7 +375,6 @@ export default function DhuloScreen() {
         onThemeChange={setAppThemeId}
         profileBio={profileBio}
         profileAvatarUri={profileAvatarUri}
-        profileInitial={profileInitial}
         profileName={profileName}
         selectedBackgroundStyle={appBackgroundStyle}
         selectedThemeId={appThemeId}
@@ -394,7 +393,6 @@ export default function DhuloScreen() {
         onOpenProfile={() => openProfile('home')}
         onOpenSettings={() => setMode('settings')}
         profileAvatarUri={profileAvatarUri}
-        profileInitial={profileInitial}
         resolvedThemeId={appThemeId}
       />
       {finaleNote ? <FinalDeleteAnimation note={finaleNote} onFinish={completeDelete} /> : null}

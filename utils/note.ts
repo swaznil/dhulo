@@ -16,8 +16,8 @@ export function getDestroyCopy(styleId: DecayStyle): DestroyCopy {
     return { action: 'Burn Note', icon: 'local-fire-department', shortAction: 'Burn' };
   }
 
-  if (styleId === 'blur') {
-    return { action: 'Clear Blurred Note', icon: 'blur-on', shortAction: 'Clear' };
+  if (styleId === 'redact') {
+    return { action: 'Remove Redacted Note', icon: 'format-color-reset', shortAction: 'Remove' };
   }
 
   if (styleId === 'scramble') {

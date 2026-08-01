@@ -36,7 +36,7 @@ function NoteCardInner({ note, now, onPress }: Props) {
       ]}>
       {note.imageUri && !imageFailed ? (
         <Image
-          blurRadius={note.decayStyle === 'blur' ? visualProgress * 6 : 0}
+          blurRadius={0}
           onError={() => setImageFailed(true)}
           source={{ uri: note.imageUri }}
           style={[styles.image, { opacity: Math.max(0.18, 1 - visualProgress * 0.66) }]}
@@ -53,7 +53,7 @@ function NoteCardInner({ note, now, onPress }: Props) {
               style={[
                 styles.decayDot,
                 {
-                  backgroundColor: note.decayStyle === 'ash' ? '#f97316' : note.decayStyle === 'blur' ? theme.secondary : theme.accent,
+                  backgroundColor: note.decayStyle === 'ash' ? '#f97316' : note.decayStyle === 'redact' ? theme.secondary : theme.accent,
                   opacity: 0.35 + visualProgress * 0.65,
                   transform: [{ scale: 0.74 + visualProgress * 0.6 }],
                 },

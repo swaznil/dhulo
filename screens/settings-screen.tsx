@@ -1,4 +1,6 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import Constants from 'expo-constants';
+import { Image as ExpoImage } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { ComponentProps, ReactNode } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
@@ -11,6 +13,8 @@ import { DecayStyle, DHULO_THEMES, ThemeId } from '@/lib/dhulo';
 
 const PROJECT_URL = 'https://github.com/swaznil/dhulo';
 const PRIVACY_URL = 'https://swaznil.github.io/dhulo/privacy-policy.html';
+const SUPPORT_URL = 'mailto:swaznilxd@gmail.com';
+const brandMark = require('@/assets/images/brand-mark.png');
 
 type Props = {
   ambientMotionEnabled: boolean;
@@ -52,6 +56,8 @@ export function SettingsScreen({
   const theme = DHULO_THEMES[themeId];
   const openProject = () => Linking.openURL(PROJECT_URL).catch(() => undefined);
   const openPrivacy = () => Linking.openURL(PRIVACY_URL).catch(() => undefined);
+  const openSupport = () => Linking.openURL(SUPPORT_URL).catch(() => undefined);
+  const version = Constants.expoConfig?.version ?? '1.0.0';
 
   return (
     <AmbientBackground theme={theme}>
@@ -66,14 +72,9 @@ export function SettingsScreen({
         </View>
 
         <ScrollView contentContainerStyle={styles.content} nestedScrollEnabled showsVerticalScrollIndicator={false}>
-          <View style={[styles.hero, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <View style={[styles.heroIcon, { backgroundColor: theme.elevated }]}>
-              <MaterialIcons name="tune" size={23} color={theme.accent} />
-            </View>
-            <View style={styles.heroCopy}>
-              <Text style={[styles.heroTitle, { color: theme.text }]}>Set Dhulo up your way</Text>
-              <Text style={[styles.heroText, { color: theme.muted }]}>These are only defaults. You can change the time, fade and colour on every note.</Text>
-            </View>
+          <View style={styles.intro}>
+            <Text style={[styles.introTitle, { color: theme.text }]}>Make it feel right.</Text>
+            <Text style={[styles.introText, { color: theme.muted }]}>Choose the defaults for new notes. You can still change the time, decay and colour while writing.</Text>
           </View>
 
           <Section title="New notes" theme={theme}>
@@ -107,12 +108,52 @@ export function SettingsScreen({
             <ActionRow icon="palette" label="Colours and wallpaper" onPress={onPersonalizationPress} theme={theme} />
             <ActionRow icon="touch-app" label="Run the tutorial again" onPress={onGuidePress} theme={theme} />
             <ActionRow icon="code" label="GitHub project" onPress={openProject} theme={theme} />
-            <ActionRow icon="privacy-tip" label="Privacy policy" onPress={openPrivacy} theme={theme} />
             <ActionRow badge="Coming soon" disabled icon="ios-share" label="Share Dhulo" onPress={() => undefined} theme={theme} />
           </Section>
+
+          <View style={styles.aboutSection}>
+            <Text style={[styles.sectionTitle, { color: theme.faint }]}>About Dhulo</Text>
+            <View style={[styles.aboutCard, { backgroundColor: theme.surface, borderColor: theme.border, boxShadow: `0 16px 44px ${theme.shadow}33` }]}>
+              <View style={[styles.aboutLogo, { backgroundColor: theme.elevated }]}>
+                <ExpoImage contentFit="contain" source={brandMark} style={styles.aboutLogoImage} />
+              </View>
+              <Text style={[styles.aboutName, { color: theme.text }]}>Dhulo</Text>
+              <View style={[styles.versionBadge, { backgroundColor: theme.elevated }]}>
+                <Text style={[styles.versionText, { color: theme.muted }]}>v{version}</Text>
+              </View>
+              <Text style={[styles.aboutText, { color: theme.muted }]}>A quiet place to write down what is bothering you, give it time, and let it fade.</Text>
+              <Text style={[styles.aboutNote, { color: theme.faint }]}>Thoughts meant to fade.</Text>
+              <View style={styles.aboutActions}>
+                <AboutButton icon="privacy-tip" label="Privacy Policy" onPress={openPrivacy} theme={theme} />
+                <AboutButton icon="mail-outline" label="Contact Support" onPress={openSupport} theme={theme} />
+              </View>
+            </View>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </AmbientBackground>
+  );
+}
+
+function AboutButton({
+  icon,
+  label,
+  onPress,
+  theme,
+}: {
+  icon: ComponentProps<typeof MaterialIcons>['name'];
+  label: string;
+  onPress: () => void;
+  theme: typeof DHULO_THEMES.obsidian;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="link"
+      onPress={onPress}
+      style={({ pressed }) => [styles.aboutButton, { borderColor: theme.border, opacity: pressed ? 0.62 : 1 }]}>
+      <MaterialIcons color={theme.accent} name={icon} size={16} />
+      <Text style={[styles.aboutButtonText, { color: theme.text }]}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -190,6 +231,70 @@ function ToggleRow({
 }
 
 const styles = StyleSheet.create({
+  aboutActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+    maxWidth: 380,
+    width: '100%',
+  },
+  aboutButton: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 13,
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: 'row',
+    gap: 7,
+    justifyContent: 'center',
+    minHeight: 46,
+    paddingHorizontal: 10,
+  },
+  aboutButtonText: {
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  aboutCard: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 22,
+    borderWidth: 1,
+    gap: 9,
+    padding: 22,
+  },
+  aboutLogo: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 17,
+    height: 66,
+    justifyContent: 'center',
+    marginBottom: 3,
+    width: 66,
+  },
+  aboutLogoImage: {
+    height: 50,
+    width: 50,
+  },
+  aboutName: {
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: -0.4,
+  },
+  aboutNote: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 3,
+  },
+  aboutSection: {
+    gap: 8,
+  },
+  aboutText: {
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 20,
+    maxWidth: 410,
+    textAlign: 'center',
+  },
   comingSoon: {
     alignItems: 'center',
     borderCurve: 'continuous',
@@ -224,35 +329,21 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     marginTop: -5,
   },
-  hero: {
-    alignItems: 'center',
-    borderCurve: 'continuous',
-    borderRadius: 22,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 14,
-    padding: 16,
+  intro: {
+    gap: 6,
+    paddingHorizontal: 2,
+    paddingVertical: 4,
   },
-  heroCopy: {
-    flex: 1,
+  introText: {
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 21,
+    maxWidth: 560,
   },
-  heroIcon: {
-    alignItems: 'center',
-    borderCurve: 'continuous',
-    borderRadius: 14,
-    height: 48,
-    justifyContent: 'center',
-    width: 48,
-  },
-  heroText: {
-    fontSize: 13,
-    fontWeight: '700',
-    lineHeight: 19,
-    marginTop: 3,
-  },
-  heroTitle: {
-    fontSize: 20,
+  introTitle: {
+    fontSize: 25,
     fontWeight: '900',
+    letterSpacing: -0.5,
   },
   header: {
     alignItems: 'center',
@@ -321,5 +412,15 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '900',
     letterSpacing: 0,
+  },
+  versionBadge: {
+    borderCurve: 'continuous',
+    borderRadius: 99,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+  },
+  versionText: {
+    fontSize: 11,
+    fontWeight: '800',
   },
 });

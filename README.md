@@ -6,13 +6,13 @@ I built Dhulo for the thoughts that need somewhere to land, but do not need a pe
 
 Dhulo is not trying to become a productivity system or an endless journal archive. It is a small, private ritual: get it out, sit with it for a while, then let it go.
 
-The name _Dhulo_ means dust. That felt right for an app where words can soften, scatter, and finally disappear.
+The name _Dhulo_ means dust in Nepali. That felt right for an app where words can soften, scatter, and finally disappear.
 
 ## What it can do
 
 - Write temporary notes with an optional photo
 - Choose an exact lifespan with day, hour, and minute controls
-- Let words decay as Ash, Drift, Blur, or Scramble
+- Let words decay as Ash, Drift, Redact, or Scramble
 - Watch the decay happen gradually while the timer runs
 - Use **Decay now** to fast-forward and see the ending live
 - Put a note on hold and resume it when you are ready
@@ -31,14 +31,6 @@ The name _Dhulo_ means dust. That felt right for an app where words can soften, 
 4. Release it for good when its time is up.
 
 Dhulo keeps a final decayed trace at expiry, but the original writing cannot be reopened. Final release removes the note from the app. That action is deliberately irreversible.
-
-## Private by design
-
-Dhulo has no account, ads, analytics, or cloud note sync. Notes, settings, profile details, and private copies of attached photos stay in local app storage. The app does not upload your writing or use it to train AI models.
-
-The GitHub and Privacy Policy links only open when you tap them. As with any local app, someone who can unlock your device or access a device backup may also be able to access locally stored app data.
-
-Read the full [privacy policy](https://swaznil.github.io/dhulo/privacy-policy.html).
 
 ## Run it locally
 
@@ -86,12 +78,10 @@ utils/         Timing, formatting, and shared constants
 assets/        Icons, brand artwork, fonts, and bundled sound
 ```
 
-## A small but important note
+## Private by design
 
-Dhulo can be a comforting place to put a difficult thought, but it is not therapy, medical advice, or an emergency service. If you might hurt yourself or someone else, contact local emergency services or a trusted person who can stay with you.
+Dhulo has no account, ads, analytics, or cloud note sync. Notes, settings, profile details, and private copies of attached photos stay in local app storage. The app does not upload your writing or use it to train AI models.
 
-## Contributing
+The GitHub and Privacy Policy links only open when you tap them. As with any local app, someone who can unlock your device or access a device backup may also be able to access locally stored app data.
 
-This is an indie project and thoughtful help is welcome. If something feels confusing, too slow, or emotionally off, open an issue and describe what you expected to happen. For bugs, including your device, operating-system version, and a short reproduction makes the fix much easier.
-
-Please do not include private note contents, personal photos, access tokens, or other sensitive information in issues or screenshots.
+Read the full [privacy policy](https://swaznil.github.io/dhulo/privacy-policy.html).

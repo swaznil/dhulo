@@ -1,4 +1,5 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { Image as ExpoImage } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,6 +9,8 @@ import { BackgroundArtwork } from '@/components/dhulo/ambient-field';
 import { AppBackgroundStyle } from '@/context/dhulo-store';
 import { BACKGROUND_OPTIONS, THEME_IDS } from '@/utils/constants';
 import { DHULO_THEMES, DhuloNote, getNoteProgress, ThemeId } from '@/lib/dhulo';
+
+const brandMark = require('@/assets/images/brand-mark.png');
 
 type Props = {
   notes: DhuloNote[];
@@ -19,7 +22,6 @@ type Props = {
   onThemeChange: (themeId: ThemeId) => void;
   profileBio: string;
   profileAvatarUri?: string;
-  profileInitial: string;
   profileName: string;
   selectedBackgroundStyle: AppBackgroundStyle;
   selectedThemeId: ThemeId;
@@ -36,7 +38,6 @@ export function ProfileScreen({
   onThemeChange,
   profileBio,
   profileAvatarUri,
-  profileInitial,
   profileName,
   selectedBackgroundStyle,
   selectedThemeId,
@@ -66,7 +67,7 @@ export function ProfileScreen({
               {profileAvatarUri ? (
                 <Image source={{ uri: profileAvatarUri }} style={styles.avatarImage} />
               ) : (
-                <Text style={[styles.avatarText, { color: theme.background }]}>{profileInitial || 'D'}</Text>
+                <ExpoImage contentFit="contain" source={brandMark} style={styles.avatarLogo} />
               )}
               <View style={[styles.avatarEdit, { backgroundColor: theme.text }]}>
                 <MaterialIcons name="photo-camera" size={13} color={theme.background} />
@@ -192,9 +193,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     width: 72,
   },
-  avatarText: {
-    fontSize: 28,
-    fontWeight: '900',
+  avatarLogo: {
+    height: 54,
+    width: 54,
     letterSpacing: 0,
   },
   backgroundCheck: {
