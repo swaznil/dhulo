@@ -118,7 +118,7 @@ export function DhuloStoreProvider({ children }: PropsWithChildren) {
 
   // Profile
   const [profileName, setProfileName] = useState('Dhulo Space');
-  const [profileBio, setProfileBio] = useState('A corner for thoughts I am done carrying.');
+  const [profileBio, setProfileBio] = useState('Click to edit');
   const [profileInitial, setProfileInitial] = useState('D');
   const [profileAvatarUri, setProfileAvatarUri] = useState<string | undefined>();
 

@@ -1,7 +1,6 @@
 # Dhulo
 
-Dhulo is a small disappearing journal app.
-
+Dhulo is a small disappearing journal app for Thoughts meant to fade.
 You write a note, choose how long it should live, and let it slowly fall apart. Text can burn into ash, blur out, drift apart, or scramble itself. Images fade and soften too. The point is not to build an archive. It is a place for thoughts that only need to exist for a while.
 
 ## What It Does

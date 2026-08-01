@@ -10,6 +10,7 @@ import { DurationWheel } from '@/components/duration-wheel';
 import { DecayStyle, DHULO_THEMES, ThemeId } from '@/lib/dhulo';
 
 const PROJECT_URL = 'https://github.com/swaznil/dhulo';
+const PRIVACY_URL = 'https://swaznil.github.io/dhulo/privacy-policy.html';
 
 type Props = {
   ambientMotionEnabled: boolean;
@@ -50,6 +51,7 @@ export function SettingsScreen({
 }: Props) {
   const theme = DHULO_THEMES[themeId];
   const openProject = () => Linking.openURL(PROJECT_URL).catch(() => undefined);
+  const openPrivacy = () => Linking.openURL(PRIVACY_URL).catch(() => undefined);
 
   return (
     <AmbientBackground theme={theme}>
@@ -105,7 +107,7 @@ export function SettingsScreen({
             <ActionRow icon="palette" label="Colours and wallpaper" onPress={onPersonalizationPress} theme={theme} />
             <ActionRow icon="touch-app" label="Run the tutorial again" onPress={onGuidePress} theme={theme} />
             <ActionRow icon="code" label="GitHub project" onPress={openProject} theme={theme} />
-            <ActionRow icon="privacy-tip" label="Privacy policy" onPress={openProject} theme={theme} />
+            <ActionRow icon="privacy-tip" label="Privacy policy" onPress={openPrivacy} theme={theme} />
             <ActionRow badge="Coming soon" disabled icon="ios-share" label="Share Dhulo" onPress={() => undefined} theme={theme} />
           </Section>
         </ScrollView>

@@ -1,24 +1,32 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Image } from 'expo-image';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, FadeInRight, FadeOutLeft } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DecayText } from '@/components/dhulo/decay-text';
+import { BackgroundArtwork } from '@/components/dhulo/ambient-field';
+import { AppBackgroundStyle } from '@/context/dhulo-store';
 import { useGlobalTimer } from '@/hooks/use-global-timer';
 import { DECAY_OPTIONS, DecayStyle, DHULO_THEMES, ThemeId } from '@/lib/dhulo';
+import { BACKGROUND_OPTIONS, THEME_IDS } from '@/utils/constants';
 
 const brandMark = require('@/assets/images/brand-mark.png');
-const STEP_COUNT = 3;
+const STEP_COUNT = 4;
+const PROJECT_URL = 'https://github.com/swaznil/dhulo';
+const PRIVACY_URL = 'https://swaznil.github.io/dhulo/privacy-policy.html';
 
 type Props = {
+  backgroundStyle: AppBackgroundStyle;
+  onBackgroundStyleChange: (backgroundStyle: AppBackgroundStyle) => void;
   onComplete: () => void;
   onCreateNote: (initialBody: string) => void;
+  onThemeChange: (themeId: ThemeId) => void;
   themeId: ThemeId;
 };
 
-export function GuideOverlay({ onComplete, onCreateNote, themeId }: Props) {
+export function GuideOverlay({ backgroundStyle, onBackgroundStyleChange, onComplete, onCreateNote, onThemeChange, themeId }: Props) {
   const [step, setStep] = useState(0);
   const [practiceText, setPracticeText] = useState('');
   const [styleId, setStyleId] = useState<DecayStyle>('drift');
@@ -103,6 +111,9 @@ export function GuideOverlay({ onComplete, onCreateNote, themeId }: Props) {
           paddingTop: Math.max(insets.top, 16),
         },
       ]}>
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <BackgroundArtwork backgroundStyle={backgroundStyle} theme={theme} />
+      </View>
       <View style={styles.topRow}>
         <View style={styles.brandRow}>
           <Image contentFit="contain" source={brandMark} style={styles.brandMark} />
@@ -134,8 +145,16 @@ export function GuideOverlay({ onComplete, onCreateNote, themeId }: Props) {
         showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInRight.duration(220)} exiting={FadeOutLeft.duration(150)} key={step} style={styles.lesson}>
           {step === 0 ? (
-            <WriteLesson practiceText={practiceText} setPracticeText={setPracticeText} theme={theme} />
+            <IntroLesson
+              backgroundStyle={backgroundStyle}
+              onBackgroundStyleChange={onBackgroundStyleChange}
+              onThemeChange={onThemeChange}
+              theme={theme}
+              themeId={themeId}
+            />
           ) : step === 1 ? (
+            <WriteLesson practiceText={practiceText} setPracticeText={setPracticeText} theme={theme} />
+          ) : step === 2 ? (
             <FadeLesson
               now={now}
               onPlay={playPreview}
@@ -166,12 +185,91 @@ export function GuideOverlay({ onComplete, onCreateNote, themeId }: Props) {
           onPress={goNext}
           style={({ pressed }) => [styles.nextButton, { backgroundColor: theme.text, opacity: pressed ? 0.68 : 1 }]}>
           <Text style={[styles.nextText, { color: theme.background }]}>
-            {step === 0 ? 'Choose a fade' : step === 1 ? 'See the final step' : 'Write my note'}
+            {step === 0 ? 'Show me around' : step === 1 ? 'Choose a fade' : step === 2 ? 'See the final step' : 'Write my note'}
           </Text>
           <MaterialIcons color={theme.background} name="arrow-forward" size={18} />
         </Pressable>
       </View>
     </Animated.View>
+  );
+}
+
+function IntroLesson({
+  backgroundStyle,
+  onBackgroundStyleChange,
+  onThemeChange,
+  theme,
+  themeId,
+}: {
+  backgroundStyle: AppBackgroundStyle;
+  onBackgroundStyleChange: (backgroundStyle: AppBackgroundStyle) => void;
+  onThemeChange: (themeId: ThemeId) => void;
+  theme: typeof DHULO_THEMES.noir;
+  themeId: ThemeId;
+}) {
+  return (
+    <>
+      <View style={styles.lessonCopy}>
+        <Text style={[styles.stepLabel, { color: theme.accent }]}>0 · A SMALL PLACE TO EXHALE</Text>
+        <Text style={[styles.title, { color: theme.text }]}>Your mind can put things down here.</Text>
+        <Text style={[styles.body, { color: theme.muted }]}>Write the thought that keeps circling. Give it some time. Watch it loosen, fade, and leave when you are ready.</Text>
+      </View>
+
+      <View style={styles.pickerSection}>
+        <Text style={[styles.pickerLabel, { color: theme.text }]}>Pick a colour</Text>
+        <ScrollView contentContainerStyle={styles.themePicker} horizontal nestedScrollEnabled showsHorizontalScrollIndicator={false}>
+          {THEME_IDS.map((optionId) => {
+            const option = DHULO_THEMES[optionId];
+            const selected = optionId === themeId;
+            return (
+              <Pressable
+                accessibilityLabel={`Use ${option.name} theme`}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                key={optionId}
+                onPress={() => onThemeChange(optionId)}
+                style={[styles.themePick, { backgroundColor: option.surface, borderColor: selected ? theme.accent : option.border }]}>
+                <View style={[styles.themeDot, { backgroundColor: option.accent }]} />
+                <Text style={[styles.themePickText, { color: option.text }]}>{option.name}</Text>
+                {selected ? <MaterialIcons color={theme.accent} name="check" size={15} /> : null}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      <View style={styles.pickerSection}>
+        <Text style={[styles.pickerLabel, { color: theme.text }]}>Pick a backdrop</Text>
+        <ScrollView contentContainerStyle={styles.backgroundPicker} horizontal nestedScrollEnabled showsHorizontalScrollIndicator={false}>
+          {BACKGROUND_OPTIONS.map((option) => {
+            const selected = option.id === backgroundStyle;
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                key={option.id}
+                onPress={() => onBackgroundStyleChange(option.id)}
+                style={[styles.backgroundPick, { backgroundColor: theme.surface, borderColor: selected ? theme.accent : theme.border }]}>
+                <View style={[styles.backgroundPreview, { backgroundColor: theme.background }]} pointerEvents="none">
+                  <BackgroundArtwork backgroundStyle={option.id} theme={theme} />
+                </View>
+                <Text style={[styles.backgroundPickText, { color: theme.text }]}>{option.name}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      <View style={styles.quietLinks}>
+        <Pressable accessibilityRole="link" onPress={() => Linking.openURL(PROJECT_URL).catch(() => undefined)}>
+          <Text style={[styles.quietLink, { color: theme.faint }]}>GitHub</Text>
+        </Pressable>
+        <Text style={[styles.quietDivider, { color: theme.faint }]}>·</Text>
+        <Pressable accessibilityRole="link" onPress={() => Linking.openURL(PRIVACY_URL).catch(() => undefined)}>
+          <Text style={[styles.quietLink, { color: theme.faint }]}>Privacy</Text>
+        </Pressable>
+      </View>
+    </>
   );
 }
 
@@ -367,6 +465,30 @@ function ReleaseLesson({
 }
 
 const styles = StyleSheet.create({
+  backgroundPick: {
+    borderCurve: 'continuous',
+    borderRadius: 15,
+    borderWidth: 1,
+    gap: 7,
+    padding: 7,
+    width: 132,
+  },
+  backgroundPicker: {
+    gap: 9,
+    paddingRight: 8,
+  },
+  backgroundPickText: {
+    fontSize: 12,
+    fontWeight: '800',
+    paddingHorizontal: 3,
+    paddingBottom: 2,
+  },
+  backgroundPreview: {
+    borderCurve: 'continuous',
+    borderRadius: 10,
+    height: 66,
+    overflow: 'hidden',
+  },
   backButton: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -453,6 +575,13 @@ const styles = StyleSheet.create({
   lessonCopy: {
     gap: 9,
   },
+  pickerLabel: {
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  pickerSection: {
+    gap: 9,
+  },
   nextButton: {
     alignItems: 'center',
     borderCurve: 'continuous',
@@ -512,6 +641,21 @@ const styles = StyleSheet.create({
   practiceLabel: {
     fontSize: 13,
     fontWeight: '900',
+  },
+  quietDivider: {
+    fontSize: 11,
+  },
+  quietLink: {
+    fontSize: 11,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
+  quietLinks: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    paddingTop: 2,
   },
   previewButton: {
     alignItems: 'center',
@@ -680,6 +824,29 @@ const styles = StyleSheet.create({
   styleRow: {
     flexDirection: 'row',
     gap: 7,
+  },
+  themeDot: {
+    borderRadius: 99,
+    height: 14,
+    width: 14,
+  },
+  themePick: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 13,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 7,
+    minHeight: 40,
+    paddingHorizontal: 11,
+  },
+  themePicker: {
+    gap: 8,
+    paddingRight: 8,
+  },
+  themePickText: {
+    fontSize: 12,
+    fontWeight: '900',
   },
   title: {
     fontSize: 32,

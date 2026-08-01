@@ -286,11 +286,14 @@ export default function DhuloScreen() {
   if (!guideCompleted) {
     return (
       <GuideOverlay
+        backgroundStyle={appBackgroundStyle}
+        onBackgroundStyleChange={setAppBackgroundStyle}
         onComplete={() => setGuideCompleted(true)}
         onCreateNote={(initialBody) => {
           setGuideCompleted(true);
           startGuidedNote(initialBody);
         }}
+        onThemeChange={setAppThemeId}
         themeId={appThemeId}
       />
     );

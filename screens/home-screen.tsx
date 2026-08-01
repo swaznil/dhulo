@@ -98,9 +98,9 @@ export const HomeScreen = memo(function HomeScreen({
           <View style={styles.titleBlock}>
             <View style={styles.brandLockup}>
               <ExpoImage contentFit="contain" source={brandMark} style={styles.brandMark} />
-              <Text style={[styles.title, { color: theme.text }]}>Dhulo</Text>
+              <Text style={[styles.title, { color: theme.text }]}>Dhulo  </Text>
             </View>
-            <Text style={[styles.subtitle, { color: theme.faint }]}>Notes with an ending</Text>
+            <Text style={[styles.subtitle, { color: theme.faint }]}>Thoughts meant to fade</Text>
           </View>
           <Pressable accessibilityLabel="Open settings" accessibilityRole="button" onPress={onOpenSettings} style={[styles.iconButton, { backgroundColor: theme.surface }]}>
             <MaterialIcons name="settings" size={22} color={theme.text} />
@@ -222,12 +222,6 @@ function EmptyState({
   return (
     <View style={styles.emptyWrap}>
       <View style={[styles.comfortCard, { backgroundColor: theme.surface, borderColor: theme.border, boxShadow: `0 18px 50px ${theme.shadow}33` }]}>
-        <View style={styles.comfortTopRow}>
-          <View style={[styles.comfortIcon, { backgroundColor: theme.elevated }]}>
-            <MaterialIcons color={theme.accent} name="edit-note" size={25} />
-          </View>
-          <Text style={[styles.comfortEyebrow, { color: theme.faint }]}>THIS SPACE IS YOURS</Text>
-        </View>
         <Text style={[styles.comfortTitle, { color: theme.text }]}>What has been sitting heavy today?</Text>
         <Text style={[styles.comfortText, { color: theme.muted }]}>
           You do not have to explain it perfectly. Put it down in your own words and let the note carry it for a while.
@@ -279,19 +273,6 @@ const styles = StyleSheet.create({
     padding: 22,
     width: '100%',
   },
-  comfortEyebrow: {
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1.1,
-  },
-  comfortIcon: {
-    alignItems: 'center',
-    borderCurve: 'continuous',
-    borderRadius: 12,
-    height: 42,
-    justifyContent: 'center',
-    width: 42,
-  },
   comfortStep: {
     fontSize: 9,
     fontWeight: '900',
@@ -319,11 +300,6 @@ const styles = StyleSheet.create({
     lineHeight: 33,
     marginTop: 18,
     maxWidth: 500,
-  },
-  comfortTopRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 11,
   },
   emptyText: {
     fontSize: 15,
