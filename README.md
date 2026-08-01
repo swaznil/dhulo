@@ -1,55 +1,97 @@
 # Dhulo
 
-Dhulo is a small disappearing journal app for Thoughts meant to fade.
-You write a note, choose how long it should live, and let it slowly fall apart. Text can burn into ash, blur out, drift apart, or scramble itself. Images fade and soften too. The point is not to build an archive. It is a place for thoughts that only need to exist for a while.
+**Thoughts meant to fade.**
 
-## What It Does
+I built Dhulo for the thoughts that need somewhere to land, but do not need a permanent home. Write down whatever is looping in your head, choose how long you want to keep it around, and watch the words slowly lose their shape.
 
-- Create temporary notes with text and optional images
-- Pick a lifespan for each note
-- Choose a decay style: ash, blur, drift, or scramble
-- Fast-forward a note to expiry, watch it decay live, then restore or release it
-- Save unfinished writing as drafts and reopen it later
-- Search, filter, sort, preserve, extend, duplicate, and share notes
-- Customize the app mood with themes and animated backgrounds
-- Learn the ritual through an optional first-launch guide
-- Keep notes and durable copies of attached photos local on the device
+Dhulo is not trying to become a productivity system or an endless journal archive. It is a small, private ritual: get it out, sit with it for a while, then let it go.
 
-## Running It
+The name _Dhulo_ means dust. That felt right for an app where words can soften, scatter, and finally disappear.
 
-Install dependencies:
+## What it can do
+
+- Write temporary notes with an optional photo
+- Choose an exact lifespan with day, hour, and minute controls
+- Let words decay as Ash, Drift, Blur, or Scramble
+- Watch the decay happen gradually while the timer runs
+- Use **Decay now** to fast-forward and see the ending live
+- Put a note on hold and resume it when you are ready
+- Keep unfinished writing as a local draft
+- Search notes, filter by state, and sort by newest or ending soon
+- Choose from several colour themes and genuinely different wallpapers
+- Set sound, haptics, motion, default timing, and default decay behaviour
+- Learn the app through an interactive first-launch guide
+- Release an expired note permanently, with no trash folder or restore button
+
+## The basic idea
+
+1. Write what is bothering you. It can be messy.
+2. Pick how long the note should stay.
+3. Let it fade in the background, or fast-forward when you want to move on.
+4. Release it for good when its time is up.
+
+Dhulo keeps a final decayed trace at expiry, but the original writing cannot be reopened. Final release removes the note from the app. That action is deliberately irreversible.
+
+## Private by design
+
+Dhulo has no account, ads, analytics, or cloud note sync. Notes, settings, profile details, and private copies of attached photos stay in local app storage. The app does not upload your writing or use it to train AI models.
+
+The GitHub and Privacy Policy links only open when you tap them. As with any local app, someone who can unlock your device or access a device backup may also be able to access locally stored app data.
+
+Read the full [privacy policy](https://swaznil.github.io/dhulo/privacy-policy.html).
+
+## Run it locally
+
+Dhulo uses Expo SDK 54 and npm.
 
 ```bash
 npm install
-```
-
-Start Expo:
-
-```bash
 npx expo start
 ```
 
-Then scan the QR code with Expo Go.
+Scan the QR code with Expo Go, or press the platform shortcut shown by Expo. Expo Go is the quickest development loop; a native build is the better final check for storage, permissions, haptics, and sound.
 
-## Expo Version
-
-This app is pinned to Expo SDK 54 because that is the version that works with the regular Expo Go app on phones right now. 
-If Expogois updated, run:
+Before opening a pull request or preparing a build, run:
 
 ```bash
-npx expo install --check
+npm run lint
+npx tsc --noEmit
 npx expo-doctor
 ```
 
-## Project Map
+## Android builds
 
-- `app/` contains the Expo Router entry and the main screen switching
-- `screens/` has the full app screens
-- `components/` has shared UI, animation, and note rendering pieces
-- `context/` stores notes, settings, and profile state
-- `lib/` holds the decay rules and core types
-- `utils/` has timing, formatting, and shared constants
+The EAS profiles are already configured in `eas.json`.
 
-## Current State
+```bash
+# Installable APK for testing
+npm run build:android:apk
 
-Ready for Expo Go testing. No release build has been created.
+# Play Store AAB
+npm run build:android:aab
+```
+
+The production profile creates an Android App Bundle and increments the remote Android version code. Building and publishing are intentionally separate steps.
+
+## Project layout
+
+```text
+app/           Expo Router entry and top-level screen flow
+screens/       Home, editor, reader, profile, and settings screens
+components/    Shared interface, tutorial, timer, and decay visuals
+context/       Local notes, settings, and profile state
+hooks/         Timers, theme helpers, and keyboard behaviour
+lib/           Note models, decay rules, and local image storage
+utils/         Timing, formatting, and shared constants
+assets/        Icons, brand artwork, fonts, and bundled sound
+```
+
+## A small but important note
+
+Dhulo can be a comforting place to put a difficult thought, but it is not therapy, medical advice, or an emergency service. If you might hurt yourself or someone else, contact local emergency services or a trusted person who can stay with you.
+
+## Contributing
+
+This is an indie project and thoughtful help is welcome. If something feels confusing, too slow, or emotionally off, open an issue and describe what you expected to happen. For bugs, including your device, operating-system version, and a short reproduction makes the fix much easier.
+
+Please do not include private note contents, personal photos, access tokens, or other sensitive information in issues or screenshots.
