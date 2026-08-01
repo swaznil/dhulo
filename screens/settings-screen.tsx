@@ -72,61 +72,50 @@ export function SettingsScreen({
         </View>
 
         <ScrollView contentContainerStyle={styles.content} nestedScrollEnabled showsVerticalScrollIndicator={false}>
-          <View style={styles.intro}>
-            <Text style={[styles.introTitle, { color: theme.text }]}>Make it feel right.</Text>
-            <Text style={[styles.introText, { color: theme.muted }]}>Choose the defaults for new notes. You can still change the time, decay and colour while writing.</Text>
-          </View>
-
-          <Section title="New notes" theme={theme}>
+          <Section title="Note defaults" theme={theme}>
             <View style={styles.settingCopy}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>How long should they stay?</Text>
-              <Text style={[styles.settingHint, { color: theme.muted }]}>New notes start with this amount of time.</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Starting time</Text>
+              <Text style={[styles.settingHint, { color: theme.muted }]}>Used when you create a note. Each note can still have its own timer.</Text>
             </View>
             <DurationWheel onChange={onDefaultDurationChange} theme={theme} value={defaultDuration} />
             <View style={[styles.divider, { backgroundColor: theme.border }]} />
             <View style={styles.settingCopy}>
-              <Text style={[styles.settingTitle, { color: theme.text }]}>How should the words fade?</Text>
-              <Text style={[styles.settingHint, { color: theme.muted }]}>This is the starting style for a new note.</Text>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>Starting decay</Text>
+              <Text style={[styles.settingHint, { color: theme.muted }]}>The first decay style selected in a new note.</Text>
             </View>
             <DecayPreview onSelect={onDefaultStyleChange} selectedStyle={defaultStyle} theme={theme} />
           </Section>
 
-          <Section title="After a note expires" theme={theme}>
+          <Section title="When time runs out" theme={theme}>
             <ToggleRow label="Remove it automatically" onValueChange={onAutoEraseChange} theme={theme} value={autoEraseEnabled} />
             <Text style={[styles.helperText, { color: theme.muted }]}>
               {autoEraseEnabled ? 'Dhulo plays the ending and removes the note. There is no bin or undo.' : 'The note waits at zero until you tap Release for good. It still cannot be reopened.'}
             </Text>
           </Section>
 
-          <Section title="Feel and sound" theme={theme}>
+          <Section title="Feedback" theme={theme}>
             <ToggleRow label="Gentle tap feedback" onValueChange={onHapticsChange} theme={theme} value={hapticsEnabled} />
             <ToggleRow label="Sound when a note leaves" onValueChange={onSoundChange} theme={theme} value={soundEnabled} />
             <ToggleRow label="Slow wallpaper movement" onValueChange={onAmbientMotionChange} theme={theme} value={ambientMotionEnabled} />
           </Section>
 
-          <Section title="Your space" theme={theme}>
+          <Section title="Appearance and help" theme={theme}>
             <ActionRow icon="palette" label="Colours and wallpaper" onPress={onPersonalizationPress} theme={theme} />
             <ActionRow icon="touch-app" label="Run the tutorial again" onPress={onGuidePress} theme={theme} />
             <ActionRow icon="code" label="GitHub project" onPress={openProject} theme={theme} />
             <ActionRow badge="Coming soon" disabled icon="ios-share" label="Share Dhulo" onPress={() => undefined} theme={theme} />
           </Section>
-
-          <View style={styles.aboutSection}>
-            <Text style={[styles.sectionTitle, { color: theme.faint }]}>About Dhulo</Text>
-            <View style={[styles.aboutCard, { backgroundColor: theme.surface, borderColor: theme.border, boxShadow: `0 16px 44px ${theme.shadow}33` }]}>
-              <View style={[styles.aboutLogo, { backgroundColor: theme.elevated }]}>
-                <ExpoImage contentFit="contain" source={brandMark} style={styles.aboutLogoImage} />
-              </View>
-              <Text style={[styles.aboutName, { color: theme.text }]}>Dhulo</Text>
-              <View style={[styles.versionBadge, { backgroundColor: theme.elevated }]}>
-                <Text style={[styles.versionText, { color: theme.muted }]}>v{version}</Text>
-              </View>
-              <Text style={[styles.aboutText, { color: theme.muted }]}>A quiet place to write down what is bothering you, give it time, and let it fade.</Text>
-              <Text style={[styles.aboutNote, { color: theme.faint }]}>Thoughts meant to fade.</Text>
-              <View style={styles.aboutActions}>
-                <AboutButton icon="privacy-tip" label="Privacy Policy" onPress={openPrivacy} theme={theme} />
-                <AboutButton icon="mail-outline" label="Contact Support" onPress={openSupport} theme={theme} />
-              </View>
+          <View style={[styles.aboutFooter, { borderTopColor: theme.border }]}>
+            <ExpoImage contentFit="contain" source={brandMark} style={styles.aboutLogoImage} />
+            <Text style={[styles.aboutName, { color: theme.text }]}>Dhulo</Text>
+            <View style={[styles.versionBadge, { backgroundColor: theme.elevated }]}>
+              <Text style={[styles.versionText, { color: theme.muted }]}>v{version}</Text>
+            </View>
+            <Text style={[styles.aboutText, { color: theme.muted }]}>A quiet place for thoughts that need somewhere to land, but do not need to stay.</Text>
+            <Text style={[styles.aboutNote, { color: theme.faint }]}>Thoughts meant to fade.</Text>
+            <View style={styles.aboutActions}>
+              <AboutButton icon="privacy-tip" label="Privacy Policy" onPress={openPrivacy} theme={theme} />
+              <AboutButton icon="mail-outline" label="Contact Support" onPress={openSupport} theme={theme} />
             </View>
           </View>
         </ScrollView>
@@ -254,26 +243,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '900',
   },
-  aboutCard: {
-    alignItems: 'center',
-    borderCurve: 'continuous',
-    borderRadius: 22,
-    borderWidth: 1,
-    gap: 9,
-    padding: 22,
+  aboutEyebrow: {
+    alignSelf: 'stretch',
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+    marginBottom: 10,
+    textTransform: 'uppercase',
   },
-  aboutLogo: {
+  aboutFooter: {
     alignItems: 'center',
-    borderCurve: 'continuous',
-    borderRadius: 17,
-    height: 66,
-    justifyContent: 'center',
-    marginBottom: 3,
-    width: 66,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    gap: 9,
+    marginTop: 4,
+    paddingHorizontal: 8,
+    paddingTop: 24,
   },
   aboutLogoImage: {
-    height: 50,
-    width: 50,
+    height: 58,
+    marginBottom: 2,
+    width: 58,
   },
   aboutName: {
     fontSize: 24,
@@ -284,9 +273,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     marginBottom: 3,
-  },
-  aboutSection: {
-    gap: 8,
   },
   aboutText: {
     fontSize: 13,
@@ -309,18 +295,18 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   content: {
-    gap: 20,
+    gap: 24,
     padding: 20,
-    paddingBottom: 44,
+    paddingBottom: 54,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
   },
   group: {
     borderCurve: 'continuous',
-    borderRadius: 22,
+    borderRadius: 18,
     borderWidth: 1,
-    gap: 14,
+    gap: 16,
     padding: 16,
   },
   helperText: {
@@ -328,22 +314,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 19,
     marginTop: -5,
-  },
-  intro: {
-    gap: 6,
-    paddingHorizontal: 2,
-    paddingVertical: 4,
-  },
-  introText: {
-    fontSize: 14,
-    fontWeight: '600',
-    lineHeight: 21,
-    maxWidth: 560,
-  },
-  introTitle: {
-    fontSize: 25,
-    fontWeight: '900',
-    letterSpacing: -0.5,
   },
   header: {
     alignItems: 'center',
@@ -400,12 +370,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   section: {
-    gap: 8,
+    gap: 9,
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '900',
-    letterSpacing: 0,
+    letterSpacing: 0.75,
+    paddingHorizontal: 2,
     textTransform: 'uppercase',
   },
   title: {
