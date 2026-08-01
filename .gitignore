@@ -22,6 +22,7 @@ expo-env.d.ts
 .metro-health-check*
 .expo-start.*.log
 .expo-review.*.log
+.expo-web*.log
 
 # debug
 npm-debug.*
@@ -43,3 +44,13 @@ example
 # generated native folders
 /ios
 /android
+
+# local Android release artifacts (attach these to GitHub releases instead)
+*.apk
+*.aab
+/release/
+
+# generated marketing QA previews (final store artwork stays tracked)
+/assets/play-store/preview-*.png
+/assets/play-store/raw/*contact-sheet*.png
+/assets/play-store/raw/*check*.png
