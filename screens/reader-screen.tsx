@@ -24,7 +24,6 @@ type Props = {
   onExtend: (minutes: number) => void;
   onPreserve: () => void;
   onQuickBurn: () => void;
-  onRestart: () => void;
 };
 
 export function ReaderScreen({
@@ -36,7 +35,6 @@ export function ReaderScreen({
   onExtend,
   onPreserve,
   onQuickBurn,
-  onRestart,
 }: Props) {
   const now = useGlobalTimer(READER_TIMER_MS);
   const { hapticsEnabled } = useSettings();
@@ -51,9 +49,9 @@ export function ReaderScreen({
   const isFastForwarding = fastForwardProgress !== null;
   const displayGone = isGone || displayProgress >= 1;
   const displayRemaining = isFastForwarding
-    ? `Fast-forwarding · ${Math.round(displayProgress * 100)}%`
+    ? `Moving ahead · ${Math.round(displayProgress * 100)}%`
     : displayGone
-      ? 'Expired · waiting for your choice'
+      ? 'Time is up'
       : remainingLabel;
 
   useEffect(() => {
@@ -132,18 +130,12 @@ export function ReaderScreen({
             <MaterialIcons name="arrow-back" size={22} color={theme.text} />
           </Pressable>
           <Text style={[styles.headerTitle, { color: theme.text }]}>{getDecayLabel(note.decayStyle)}</Text>
-          {displayGone ? (
-            <Pressable accessibilityLabel={destroyCopy.action} accessibilityRole="button" onPress={onDelete} style={[styles.iconButton, { backgroundColor: theme.surface }]}>
-              <MaterialIcons name={destroyCopy.icon} size={20} color={theme.text} />
-            </Pressable>
-          ) : (
-            <View style={styles.iconButton} />
-          )}
+          <View style={styles.iconButton} />
         </View>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <Text style={[styles.date, { color: theme.faint }]}>{formatTimestamp(note.createdAt)}</Text>
-          <Text style={[styles.title, { color: theme.text }]}>{note.title}</Text>
+          <Text style={[styles.date, { color: theme.faint }]}>{displayGone ? 'READY TO REMOVE' : formatTimestamp(note.createdAt)}</Text>
+          <Text style={[styles.title, { color: theme.text }]}>{displayGone ? 'Nothing to bring back' : note.title}</Text>
           <Text accessibilityLiveRegion="polite" style={[styles.remaining, { color: theme.muted }]}>
             {displayRemaining}
           </Text>
@@ -151,20 +143,28 @@ export function ReaderScreen({
             <View style={[styles.progressFill, { backgroundColor: displayGone ? theme.secondary : theme.accent, width: `${displayProgress * 100}%` }]} />
           </View>
 
-          <View style={styles.page}>
-            <DecayImage accent={theme.accent} progress={displayProgress} styleId={note.decayStyle} surface={theme.surface} uri={note.imageUri} />
-            <DecayText
-              color={theme.text}
-              lineHeight={30}
-              mutedColor={theme.faint}
-              now={now}
-              progress={displayProgress}
-              seed={`${note.id}-reader`}
-              size={18}
-              styleId={note.decayStyle}
-              text={note.body || 'This memory was kept as an image.'}
-            />
-          </View>
+          {displayGone ? (
+            <View style={[styles.gonePage, { borderColor: theme.border }]}>
+              <View style={[styles.goneRule, { backgroundColor: theme.border }]} />
+              <View style={[styles.goneRule, { backgroundColor: theme.border, width: '61%' }]} />
+              <View style={[styles.goneRule, { backgroundColor: theme.border, width: '34%' }]} />
+            </View>
+          ) : (
+            <View style={styles.page}>
+              <DecayImage accent={theme.accent} progress={displayProgress} styleId={note.decayStyle} surface={theme.surface} uri={note.imageUri} />
+              <DecayText
+                color={theme.text}
+                lineHeight={30}
+                mutedColor={theme.faint}
+                now={now}
+                progress={displayProgress}
+                seed={`${note.id}-reader`}
+                size={18}
+                styleId={note.decayStyle}
+                text={note.body || 'This note was an image.'}
+              />
+            </View>
+          )}
 
           {displayGone ? (
             <View style={[styles.expiredCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -174,7 +174,7 @@ export function ReaderScreen({
               <View style={styles.expiredCopy}>
                 <Text style={[styles.expiredTitle, { color: theme.text }]}>This note has expired</Text>
                 <Text style={[styles.expiredText, { color: theme.muted }]}>
-                  Release it permanently, or restore it with a fresh lifetime.
+                  There is no undo from here. Release it when you are ready to let it leave this device.
                 </Text>
               </View>
             </View>
@@ -182,14 +182,11 @@ export function ReaderScreen({
 
           <View style={styles.actions}>
             {displayGone ? (
-              <>
-                <ActionButton icon="restore" label="Restore note" onPress={onRestart} theme={theme} />
-                <ActionButton filled icon={destroyCopy.icon} label={destroyCopy.shortAction} onPress={onDelete} theme={theme} />
-              </>
+              <ActionButton filled icon={destroyCopy.icon} label="Release for good" onPress={onDelete} theme={theme} />
             ) : note.isPreserved ? (
-              <ActionButton icon="play-arrow" label="Continue" onPress={onContinue} theme={theme} />
+              <ActionButton icon="play-arrow" label="Resume clock" onPress={onContinue} theme={theme} />
             ) : (
-              <ActionButton icon="pause" label="Preserve" onPress={onPreserve} theme={theme} />
+              <ActionButton icon="pause" label="Put on hold" onPress={onPreserve} theme={theme} />
             )}
             {!displayGone ? (
               <ActionButton
@@ -357,6 +354,21 @@ const styles = StyleSheet.create({
   page: {
     marginTop: 16,
     minHeight: 280,
+  },
+  gonePage: {
+    borderCurve: 'continuous',
+    borderRadius: 4,
+    borderWidth: 1,
+    gap: 14,
+    marginTop: 18,
+    minHeight: 220,
+    opacity: 0.62,
+    padding: 28,
+  },
+  goneRule: {
+    borderRadius: 99,
+    height: 5,
+    width: '78%',
   },
   miniAction: {
     borderCurve: 'continuous',

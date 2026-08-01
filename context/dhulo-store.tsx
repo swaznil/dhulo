@@ -43,7 +43,6 @@ type NotesValue = {
   preserveNote: (id: string) => void;
   quickBurnNote: (id: string) => void;
   removeNote: (id: string) => void;
-  restartNote: (id: string) => void;
   updateNote: (id: string, input: CreateNoteInput) => void;
 };
 
@@ -91,7 +90,7 @@ const LEGACY_STORAGE_KEY = 'dhulo.store.v1';
 const BACKGROUND_STYLES: AppBackgroundStyle[] = ['void', 'mist', 'paper', 'garden', 'signal', 'hearts', 'orbit', 'blocks'];
 
 function normalizeBackgroundStyle(backgroundStyle?: string): AppBackgroundStyle {
-  return BACKGROUND_STYLES.includes(backgroundStyle as AppBackgroundStyle) ? (backgroundStyle as AppBackgroundStyle) : 'void';
+  return BACKGROUND_STYLES.includes(backgroundStyle as AppBackgroundStyle) ? (backgroundStyle as AppBackgroundStyle) : 'signal';
 }
 
 function normalizeDuration(duration?: number) {
@@ -99,7 +98,7 @@ function normalizeDuration(duration?: number) {
 }
 
 function getSystemThemeId(): ThemeId {
-  return Appearance.getColorScheme() === 'light' ? 'daylight' : 'obsidian';
+  return Appearance.getColorScheme() === 'light' ? 'paper' : 'noir';
 }
 
 export function DhuloStoreProvider({ children }: PropsWithChildren) {
@@ -108,7 +107,7 @@ export function DhuloStoreProvider({ children }: PropsWithChildren) {
 
   // Settings
   const [appThemeId, setAppThemeId] = useState<ThemeId>(() => getSystemThemeId());
-  const [appBackgroundStyle, setAppBackgroundStyle] = useState<AppBackgroundStyle>(() => (Appearance.getColorScheme() === 'light' ? 'paper' : 'void'));
+  const [appBackgroundStyle, setAppBackgroundStyle] = useState<AppBackgroundStyle>(() => (Appearance.getColorScheme() === 'light' ? 'blocks' : 'signal'));
   const [ambientMotionEnabled, setAmbientMotionEnabled] = useState(true);
   const [defaultDuration, setDefaultDuration] = useState(180);
   const [defaultStyle, setDefaultStyle] = useState<DecayStyle>('drift');
@@ -119,7 +118,7 @@ export function DhuloStoreProvider({ children }: PropsWithChildren) {
 
   // Profile
   const [profileName, setProfileName] = useState('Dhulo Space');
-  const [profileBio, setProfileBio] = useState('Temporary notes, quiet releases, and thoughts that do not need to stay forever.');
+  const [profileBio, setProfileBio] = useState('A corner for thoughts I am done carrying.');
   const [profileInitial, setProfileInitial] = useState('D');
   const [profileAvatarUri, setProfileAvatarUri] = useState<string | undefined>();
 
@@ -376,21 +375,6 @@ export function DhuloStoreProvider({ children }: PropsWithChildren) {
     );
   }, []);
 
-  const restartNote = useCallback((id: string) => {
-    setNotes((currentNotes) =>
-      currentNotes.map((note) =>
-        note.id === id
-          ? {
-              ...note,
-              createdAt: Date.now(),
-              isPreserved: false,
-              preservedProgress: undefined,
-            }
-          : note
-      )
-    );
-  }, []);
-
   const notesValue = useMemo<NotesValue>(() => ({
     notes,
     addNote,
@@ -400,9 +384,8 @@ export function DhuloStoreProvider({ children }: PropsWithChildren) {
     preserveNote,
     quickBurnNote,
     removeNote,
-    restartNote,
     updateNote,
-  }), [notes, addNote, continueNote, duplicateNote, extendNote, preserveNote, quickBurnNote, removeNote, restartNote, updateNote]);
+  }), [notes, addNote, continueNote, duplicateNote, extendNote, preserveNote, quickBurnNote, removeNote, updateNote]);
 
   const settingsValue = useMemo<SettingsValue>(() => ({
     appThemeId,
@@ -492,7 +475,6 @@ export function useDhuloStore() {
     preserveNote: (id: string) => void;
     quickBurnNote: (id: string) => void;
     removeNote: (id: string) => void;
-    restartNote: (id: string) => void;
     setAppThemeId: (themeId: ThemeId) => void;
     setAppBackgroundStyle: (backgroundStyle: AppBackgroundStyle) => void;
     setProfileBio: (bio: string) => void;

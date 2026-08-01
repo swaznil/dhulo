@@ -6,8 +6,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AmbientBackground } from '@/components/ambient-background';
 import { DecayPreview } from '@/components/decay-preview';
-import { DurationWheel } from '@/components/duration-wheel';
-import { DecayStyle, DHULO_THEMES, DhuloNote, ThemeId } from '@/lib/dhulo';
+import { DecayStyle, DHULO_THEMES, ThemeId } from '@/lib/dhulo';
+import { DURATION_PRESETS } from '@/utils/constants';
 import { formatDuration } from '@/utils/note';
 
 type Props = {
@@ -16,7 +16,6 @@ type Props = {
   defaultDuration: number;
   defaultStyle: DecayStyle;
   hapticsEnabled: boolean;
-  notes: DhuloNote[];
   onAutoEraseChange: (enabled: boolean) => void;
   onAmbientMotionChange: (enabled: boolean) => void;
   onBack: () => void;
@@ -36,7 +35,6 @@ export function SettingsScreen({
   defaultDuration,
   defaultStyle,
   hapticsEnabled,
-  notes,
   onAutoEraseChange,
   onAmbientMotionChange,
   onBack,
@@ -52,7 +50,7 @@ export function SettingsScreen({
   const theme = DHULO_THEMES[themeId];
   async function shareApp() {
     await Share.share({
-      message: 'Dhulo is a cinematic disappearing journal for thoughts that do not need to stay forever.',
+      message: 'I have been using Dhulo to write things down without keeping them forever.',
     });
   }
 
@@ -78,58 +76,97 @@ export function SettingsScreen({
         <ScrollView contentContainerStyle={styles.content} nestedScrollEnabled showsVerticalScrollIndicator={false}>
           <View style={[styles.hero, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <View style={[styles.heroIcon, { backgroundColor: theme.elevated }]}>
-              <MaterialIcons name="hourglass-bottom" size={24} color={theme.accent} />
+              <MaterialIcons name="tune" size={23} color={theme.accent} />
             </View>
             <View style={styles.heroCopy}>
-              <Text style={[styles.heroTitle, { color: theme.text }]}>Release behavior</Text>
-              <Text style={[styles.heroText, { color: theme.muted }]}>Choose how long notes live and whether expired notes leave by themselves.</Text>
+              <Text style={[styles.heroTitle, { color: theme.text }]}>Set Dhulo up your way</Text>
+              <Text style={[styles.heroText, { color: theme.muted }]}>These are only defaults. You can change the time, fade and colour on every note.</Text>
             </View>
           </View>
 
-          <Section title="Writing defaults" theme={theme}>
-            <View style={[styles.row, { borderBottomColor: theme.border }]}>
-              <RowIcon icon="timer" theme={theme} />
-              <Text style={[styles.rowLabel, { color: theme.text }]}>Default lifespan</Text>
-              <Text style={[styles.rowValue, { color: theme.muted }]}>{formatDuration(defaultDuration)}</Text>
+          <Section title="New notes" theme={theme}>
+            <View style={styles.settingCopy}>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>How long should they stay?</Text>
+              <Text style={[styles.settingHint, { color: theme.muted }]}>New notes start with this amount of time.</Text>
             </View>
-            <DurationWheel onChange={onDefaultDurationChange} theme={theme} value={defaultDuration} />
+            <DurationPresets onChange={onDefaultDurationChange} theme={theme} value={defaultDuration} />
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
+            <View style={styles.settingCopy}>
+              <Text style={[styles.settingTitle, { color: theme.text }]}>How should the words fade?</Text>
+              <Text style={[styles.settingHint, { color: theme.muted }]}>This is the starting style for a new note.</Text>
+            </View>
             <DecayPreview onSelect={onDefaultStyleChange} selectedStyle={defaultStyle} theme={theme} />
           </Section>
 
-          <Section title="Release mode" theme={theme}>
-            <ToggleRow label="Auto-release expired notes" onValueChange={onAutoEraseChange} theme={theme} value={autoEraseEnabled} />
+          <Section title="After a note expires" theme={theme}>
+            <ToggleRow label="Remove it automatically" onValueChange={onAutoEraseChange} theme={theme} value={autoEraseEnabled} />
             <Text style={[styles.helperText, { color: theme.muted }]}>
-              {autoEraseEnabled ? 'Expired notes play their final animation and disappear automatically.' : 'Expired notes stay visible until you press their final action.'}
+              {autoEraseEnabled ? 'Dhulo plays the ending and removes the note. There is no bin or undo.' : 'The note waits at zero until you tap Release for good. It still cannot be reopened.'}
             </Text>
           </Section>
 
-          <Section title="Feedback" theme={theme}>
-            <ToggleRow label="Warm haptics" onValueChange={onHapticsChange} theme={theme} value={hapticsEnabled} />
-            <ToggleRow label="Soft sound cues" onValueChange={onSoundChange} theme={theme} value={soundEnabled} />
-            <ToggleRow label="Ambient theme motion" onValueChange={onAmbientMotionChange} theme={theme} value={ambientMotionEnabled} />
+          <Section title="Feel and sound" theme={theme}>
+            <ToggleRow label="Gentle tap feedback" onValueChange={onHapticsChange} theme={theme} value={hapticsEnabled} />
+            <ToggleRow label="Sound when a note leaves" onValueChange={onSoundChange} theme={theme} value={soundEnabled} />
+            <ToggleRow label="Slow wallpaper movement" onValueChange={onAmbientMotionChange} theme={theme} value={ambientMotionEnabled} />
           </Section>
 
-          <Section title="Actions" theme={theme}>
-            <ActionRow icon="palette" label="Personalisation" onPress={onPersonalizationPress} theme={theme} />
-            <ActionRow icon="help-outline" label="Replay the guide" onPress={onGuidePress} theme={theme} />
+          <Section title="Your space" theme={theme}>
+            <ActionRow icon="palette" label="Colours and wallpaper" onPress={onPersonalizationPress} theme={theme} />
+            <ActionRow icon="touch-app" label="Run the tutorial again" onPress={onGuidePress} theme={theme} />
             <ActionRow icon="ios-share" label="Share Dhulo" onPress={shareApp} theme={theme} />
-            <ActionRow icon="privacy-tip" label="Privacy and local storage" onPress={showPrivacy} theme={theme} />
+            <ActionRow icon="privacy-tip" label="What stays on this device" onPress={showPrivacy} theme={theme} />
           </Section>
 
           <View style={[styles.about, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <View style={[styles.aboutIcon, { backgroundColor: theme.elevated }]}>
-              <MaterialIcons name="auto-stories" size={20} color={theme.accent} />
+              <MaterialIcons name="lock-outline" size={20} color={theme.accent} />
             </View>
             <View style={styles.aboutCopy}>
-              <Text style={[styles.aboutTitle, { color: theme.text }]}>About Dhulo</Text>
+              <Text style={[styles.aboutTitle, { color: theme.text }]}>Private by default</Text>
               <Text style={[styles.aboutText, { color: theme.muted }]}>
-                Dhulo is a quiet place for feelings, fragments, and memories that do not need to stay forever. Notes are temporary by default and remain local to this device.
+                Your writing and attached photos stay on this device. Dhulo does not upload them or keep a hidden archive.
               </Text>
             </View>
           </View>
         </ScrollView>
       </SafeAreaView>
     </AmbientBackground>
+  );
+}
+
+function DurationPresets({
+  onChange,
+  theme,
+  value,
+}: {
+  onChange: (minutes: number) => void;
+  theme: typeof DHULO_THEMES.obsidian;
+  value: number;
+}) {
+  return (
+    <View style={styles.presetGrid}>
+      {DURATION_PRESETS.map((minutes) => {
+        const selected = minutes === value;
+        return (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ selected }}
+            key={minutes}
+            onPress={() => onChange(minutes)}
+            style={({ pressed }) => [
+              styles.preset,
+              {
+                backgroundColor: selected ? theme.text : theme.elevated,
+                borderColor: selected ? theme.text : theme.border,
+                opacity: pressed ? 0.68 : 1,
+              },
+            ]}>
+            <Text style={[styles.presetText, { color: selected ? theme.background : theme.text }]}>{formatDuration(minutes)}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
@@ -231,6 +268,9 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 44,
   },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+  },
   group: {
     borderCurve: 'continuous',
     borderRadius: 22,
@@ -306,6 +346,24 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     lineHeight: 21,
   },
+  preset: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 13,
+    borderWidth: 1,
+    minWidth: '30%',
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+  },
+  presetGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  presetText: {
+    fontSize: 13,
+    fontWeight: '900',
+  },
   row: {
     alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -330,6 +388,18 @@ const styles = StyleSheet.create({
   rowValue: {
     fontSize: 14,
     fontWeight: '800',
+  },
+  settingCopy: {
+    gap: 3,
+  },
+  settingHint: {
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 19,
+  },
+  settingTitle: {
+    fontSize: 16,
+    fontWeight: '900',
   },
   safeArea: {
     flex: 1,

@@ -4,10 +4,10 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AmbientBackground } from '@/components/ambient-background';
+import { BackgroundArtwork } from '@/components/dhulo/ambient-field';
 import { AppBackgroundStyle } from '@/context/dhulo-store';
 import { BACKGROUND_OPTIONS, THEME_IDS } from '@/utils/constants';
-import { DHULO_THEMES, DhuloNote, ThemeId } from '@/lib/dhulo';
-import { getNoteProgress } from '@/lib/dhulo';
+import { DHULO_THEMES, DhuloNote, getNoteProgress, ThemeId } from '@/lib/dhulo';
 
 type Props = {
   notes: DhuloNote[];
@@ -86,13 +86,13 @@ export function ProfileScreen({
           </View>
 
           <View style={styles.statsGrid}>
-            <StatTile label="Memories faded" theme={theme} value={`${goneCount}`} />
-            <StatTile label="Words dissolved" theme={theme} value={`${wordCount}`} />
-            <StatTile label="Notes held" theme={theme} value={`${notes.length}`} />
-            <StatTile label="Notes kept" theme={theme} value={`${preservedCount}`} />
+            <StatTile label="Expired" theme={theme} value={`${goneCount}`} />
+            <StatTile label="Words written" theme={theme} value={`${wordCount}`} />
+            <StatTile label="All notes" theme={theme} value={`${notes.length}`} />
+            <StatTile label="On hold" theme={theme} value={`${preservedCount}`} />
           </View>
 
-          <Text style={[styles.sectionLabel, { color: theme.faint }]}>Personal themes</Text>
+          <Text style={[styles.sectionLabel, { color: theme.faint }]}>Colours</Text>
           <View style={styles.themeDeck}>
             {THEME_IDS.map((id) => {
               const option = DHULO_THEMES[id];
@@ -116,7 +116,7 @@ export function ProfileScreen({
             })}
           </View>
 
-          <Text style={[styles.sectionLabel, { color: theme.faint }]}>Backgrounds</Text>
+          <Text style={[styles.sectionLabel, { color: theme.faint }]}>Wallpaper</Text>
           <View style={styles.backgroundDeck}>
             {BACKGROUND_OPTIONS.map((background) => {
               const selected = background.id === selectedBackgroundStyle;
@@ -127,11 +127,15 @@ export function ProfileScreen({
                   key={background.id}
                   onPress={() => onBackgroundStyleChange(background.id)}
                   style={[styles.backgroundTile, { backgroundColor: theme.surface, borderColor: selected ? theme.accent : theme.border }]}>
-                  <BackgroundPreview backgroundStyle={background.id} themeId={themeId} />
-                  <View style={styles.backgroundCopy}>
-                    <Text style={[styles.backgroundName, { color: theme.text }]}>{background.name}</Text>
-                    <Text style={[styles.backgroundCaption, { color: theme.muted }]}>{background.caption}</Text>
+                  <View style={[styles.backgroundPreview, { backgroundColor: theme.background }]}>
+                    <BackgroundArtwork backgroundStyle={background.id} theme={theme} />
+                    {selected ? (
+                      <View style={[styles.backgroundCheck, { backgroundColor: theme.text }]}>
+                        <MaterialIcons color={theme.background} name="check" size={14} />
+                      </View>
+                    ) : null}
                   </View>
+                  <Text numberOfLines={1} style={[styles.backgroundName, { color: theme.text }]}>{background.name}</Text>
                 </Pressable>
               );
             })}
@@ -160,52 +164,6 @@ function ThemeMiniPreview({ themeId }: { themeId: ThemeId }) {
     <View style={[styles.themePreview, { backgroundColor: option.background }]}>
       <View style={[styles.previewSurface, { backgroundColor: option.surface }]} />
       <View style={[styles.previewAccent, { backgroundColor: option.accent }]} />
-    </View>
-  );
-}
-
-function BackgroundPreview({ backgroundStyle, themeId }: { backgroundStyle: AppBackgroundStyle; themeId: ThemeId }) {
-  const theme = DHULO_THEMES[themeId];
-  const marks = Array.from({ length: 7 }, (_, index) => index);
-
-  return (
-    <View style={[styles.backgroundPreview, { backgroundColor: theme.background }]}>
-      {marks.map((mark) => (
-        <View
-          key={mark}
-          style={[
-            styles.previewMark,
-            {
-              backgroundColor: mark % 2 ? theme.secondary : theme.accent,
-              borderRadius: backgroundStyle === 'garden' || backgroundStyle === 'orbit' || backgroundStyle === 'hearts' ? 999 : backgroundStyle === 'signal' ? 2 : 5,
-              height:
-                backgroundStyle === 'signal'
-                  ? 3
-                  : backgroundStyle === 'paper' || backgroundStyle === 'blocks'
-                    ? 22
-                    : backgroundStyle === 'mist'
-                      ? 9
-                      : backgroundStyle === 'hearts'
-                        ? 14
-                        : 12 + mark,
-              left: `${8 + ((mark * 19) % 72)}%`,
-              opacity: 0.2 + mark * 0.04,
-              top: `${8 + ((mark * 13) % 72)}%`,
-              transform: [{ rotate: `${backgroundStyle === 'signal' ? -12 : backgroundStyle === 'hearts' ? 45 : mark % 2 ? -8 : 8}deg` }],
-              width:
-                backgroundStyle === 'signal'
-                  ? 44
-                  : backgroundStyle === 'mist'
-                    ? 40
-                    : backgroundStyle === 'paper' || backgroundStyle === 'blocks'
-                      ? 30
-                      : backgroundStyle === 'hearts'
-                        ? 14
-                        : 16 + mark * 3,
-            },
-          ]}
-        />
-      ))}
     </View>
   );
 }
@@ -239,39 +197,42 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 0,
   },
-  backgroundCaption: {
-    fontSize: 12,
-    fontWeight: '700',
-    lineHeight: 17,
-    marginTop: 3,
-  },
-  backgroundCopy: {
-    flex: 1,
+  backgroundCheck: {
+    alignItems: 'center',
+    borderRadius: 999,
+    height: 26,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 8,
+    top: 8,
+    width: 26,
   },
   backgroundDeck: {
-    gap: 10,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
   },
   backgroundName: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '900',
+    paddingHorizontal: 4,
   },
   backgroundPreview: {
     borderCurve: 'continuous',
-    borderRadius: 18,
-    height: 66,
+    borderRadius: 15,
+    height: 112,
     overflow: 'hidden',
     position: 'relative',
-    width: 92,
+    width: '100%',
   },
   backgroundTile: {
-    alignItems: 'center',
     borderCurve: 'continuous',
-    borderRadius: 20,
+    borderRadius: 18,
     borderWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
-    minHeight: 88,
-    padding: 10,
+    gap: 9,
+    padding: 7,
+    paddingBottom: 11,
+    width: '48%',
   },
   bioInput: {
     fontSize: 13,

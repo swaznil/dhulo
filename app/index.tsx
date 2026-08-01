@@ -19,7 +19,7 @@ import { SettingsScreen } from '@/screens/settings-screen';
 type ScreenMode = 'home' | 'editor' | 'reader' | 'profile' | 'settings';
 
 export default function DhuloScreen() {
-  const { addNote, continueNote, duplicateNote, extendNote, notes, preserveNote, quickBurnNote, removeNote, restartNote, updateNote } = useNotes();
+  const { addNote, continueNote, duplicateNote, extendNote, notes, preserveNote, quickBurnNote, removeNote, updateNote } = useNotes();
   const {
     appBackgroundStyle,
     appThemeId,
@@ -119,6 +119,17 @@ export default function DhuloScreen() {
     setDraftNoteId(null);
     setDraftTitle('');
     setDraftBody('');
+    setDraftImageUri(undefined);
+    setDraftDuration(defaultDuration);
+    setDraftStyle(defaultStyle);
+    setDraftThemeId(appThemeId);
+    setMode('editor');
+  }, [appThemeId, defaultDuration, defaultStyle]);
+
+  const startGuidedNote = useCallback((initialBody: string) => {
+    setDraftNoteId(null);
+    setDraftTitle('');
+    setDraftBody(initialBody);
     setDraftImageUri(undefined);
     setDraftDuration(defaultDuration);
     setDraftStyle(defaultStyle);
@@ -276,9 +287,9 @@ export default function DhuloScreen() {
     return (
       <GuideOverlay
         onComplete={() => setGuideCompleted(true)}
-        onCreateNote={() => {
+        onCreateNote={(initialBody) => {
           setGuideCompleted(true);
-          startNewNote();
+          startGuidedNote(initialBody);
         }}
         themeId={appThemeId}
       />
@@ -322,7 +333,6 @@ export default function DhuloScreen() {
           onExtend={(minutes) => extendNote(readerNote.id, minutes)}
           onPreserve={() => preserveNote(readerNote.id)}
           onQuickBurn={() => quickBurnNote(readerNote.id)}
-          onRestart={() => restartNote(readerNote.id)}
         />
         {finaleNote ? <FinalDeleteAnimation note={finaleNote} onFinish={completeDelete} /> : null}
       </>
@@ -337,7 +347,6 @@ export default function DhuloScreen() {
         defaultDuration={defaultDuration}
         defaultStyle={defaultStyle}
         hapticsEnabled={hapticsEnabled}
-        notes={notes}
         onAutoEraseChange={setAutoEraseEnabled}
         onAmbientMotionChange={setAmbientMotionEnabled}
         onBack={() => setMode('home')}

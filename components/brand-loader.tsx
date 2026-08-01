@@ -47,7 +47,7 @@ export function BrandLoader() {
       </Animated.View>
       <Animated.View entering={FadeIn.delay(120).duration(320)} style={styles.copy}>
         <Text style={styles.name}>Dhulo</Text>
-        <Text style={styles.caption}>A quiet place for passing thoughts</Text>
+        <Text style={styles.caption}>Put it down. Let time take it.</Text>
       </Animated.View>
     </View>
   );
@@ -55,14 +55,14 @@ export function BrandLoader() {
 
 const styles = StyleSheet.create({
   caption: {
-    color: '#D9C9B4',
+    color: '#AEB9C9',
     fontSize: 13,
     fontWeight: '600',
     letterSpacing: 0.2,
   },
   container: {
     alignItems: 'center',
-    backgroundColor: '#241913',
+    backgroundColor: '#0B1730',
     flex: 1,
     justifyContent: 'center',
     padding: 32,

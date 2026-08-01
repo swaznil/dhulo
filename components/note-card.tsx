@@ -78,7 +78,7 @@ function NoteCardInner({ note, now, onPress }: Props) {
         <View style={styles.footer}>
           <View style={[styles.tag, { backgroundColor: theme.elevated }]}>
             <Text style={[styles.tagText, { color: theme.text }]}>
-              {note.isDraft ? 'Draft' : note.isPreserved ? 'Preserved' : getDecayLabel(note.decayStyle)}
+              {note.isDraft ? 'Draft' : note.isPreserved ? 'On hold' : getDecayLabel(note.decayStyle)}
             </Text>
           </View>
           <Text style={[styles.remaining, { color: theme.faint }]}>{remainingLabel}</Text>
@@ -92,7 +92,7 @@ function NoteCardInner({ note, now, onPress }: Props) {
           </View>
           <Text style={[styles.goneText, { color: theme.text }]}>Gone</Text>
           <Pressable
-            accessibilityLabel="Review expired note"
+            accessibilityLabel="Finish expired note"
             accessibilityRole="button"
             onPress={(event) => {
               event.stopPropagation();
@@ -100,7 +100,7 @@ function NoteCardInner({ note, now, onPress }: Props) {
             }}
             style={[styles.destroyButton, { backgroundColor: theme.text }]}>
             <MaterialIcons name="arrow-forward" size={16} color={theme.background} />
-            <Text style={[styles.destroyText, { color: theme.background }]}>Review</Text>
+            <Text style={[styles.destroyText, { color: theme.background }]}>Finish</Text>
           </Pressable>
         </View>
       ) : null}

@@ -1,8 +1,16 @@
-import { PropsWithChildren, useEffect, useMemo, useRef } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { PropsWithChildren, useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  ReduceMotion,
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 
-import { DhuloTheme, ThemeId } from '@/lib/dhulo';
-import { AMBIENT_MOTION_MS } from '@/utils/animation';
+import { DhuloTheme } from '@/lib/dhulo';
 
 type AmbientFieldProps = PropsWithChildren<{
   animated?: boolean;
@@ -10,291 +18,432 @@ type AmbientFieldProps = PropsWithChildren<{
   theme: DhuloTheme;
 }>;
 
-const FIELD_BY_THEME: Record<ThemeId, { x: number; y: number; size: number; delay: number }[]> = {
-  obsidian: [
-    { x: 14, y: 18, size: 34, delay: 0 },
-    { x: 74, y: 12, size: 22, delay: 0.18 },
-    { x: 86, y: 42, size: 38, delay: 0.4 },
-    { x: 18, y: 72, size: 24, delay: 0.6 },
-    { x: 64, y: 84, size: 30, delay: 0.82 },
-  ],
-  graphite: [
-    { x: 10, y: 16, size: 42, delay: 0.05 },
-    { x: 76, y: 18, size: 36, delay: 0.22 },
-    { x: 44, y: 48, size: 52, delay: 0.46 },
-    { x: 16, y: 82, size: 34, delay: 0.7 },
-    { x: 86, y: 74, size: 38, delay: 0.88 },
-  ],
-  noir: [
-    { x: 16, y: 12, size: 42, delay: 0.08 },
-    { x: 70, y: 24, size: 58, delay: 0.34 },
-    { x: 9, y: 72, size: 50, delay: 0.52 },
-    { x: 58, y: 84, size: 34, delay: 0.72 },
-    { x: 88, y: 63, size: 46, delay: 0.92 },
-  ],
-  aurora: [
-    { x: 18, y: 18, size: 44, delay: 0.04 },
-    { x: 80, y: 16, size: 36, delay: 0.22 },
-    { x: 68, y: 52, size: 60, delay: 0.44 },
-    { x: 22, y: 78, size: 38, delay: 0.66 },
-    { x: 90, y: 86, size: 30, delay: 0.86 },
-  ],
-  moss: [
-    { x: 18, y: 18, size: 18, delay: 0.04 },
-    { x: 80, y: 16, size: 14, delay: 0.22 },
-    { x: 68, y: 52, size: 22, delay: 0.44 },
-    { x: 22, y: 78, size: 16, delay: 0.66 },
-    { x: 90, y: 86, size: 12, delay: 0.86 },
-  ],
-  paper: [
-    { x: 8, y: 16, size: 62, delay: 0.12 },
-    { x: 75, y: 11, size: 46, delay: 0.3 },
-    { x: 14, y: 70, size: 54, delay: 0.54 },
-    { x: 62, y: 80, size: 70, delay: 0.74 },
-    { x: 90, y: 46, size: 40, delay: 0.94 },
-  ],
-  daylight: [
-    { x: 7, y: 14, size: 78, delay: 0.08 },
-    { x: 72, y: 13, size: 44, delay: 0.26 },
-    { x: 18, y: 68, size: 58, delay: 0.5 },
-    { x: 62, y: 82, size: 86, delay: 0.72 },
-    { x: 90, y: 46, size: 36, delay: 0.92 },
-  ],
-  petal: [
-    { x: 10, y: 12, size: 58, delay: 0.1 },
-    { x: 72, y: 18, size: 76, delay: 0.28 },
-    { x: 14, y: 76, size: 44, delay: 0.5 },
-    { x: 58, y: 82, size: 64, delay: 0.72 },
-    { x: 88, y: 54, size: 38, delay: 0.9 },
-  ],
-  archive: [
-    { x: 8, y: 18, size: 52, delay: 0.06 },
-    { x: 76, y: 12, size: 40, delay: 0.24 },
-    { x: 28, y: 50, size: 72, delay: 0.48 },
-    { x: 14, y: 84, size: 42, delay: 0.66 },
-    { x: 86, y: 74, size: 58, delay: 0.9 },
-  ],
-  signal: [
-    { x: 12, y: 13, size: 32, delay: 0.08 },
-    { x: 72, y: 18, size: 54, delay: 0.24 },
-    { x: 10, y: 70, size: 48, delay: 0.52 },
-    { x: 58, y: 86, size: 28, delay: 0.7 },
-    { x: 88, y: 62, size: 42, delay: 0.92 },
-  ],
-};
-const EXTRA_MARKS = Array.from({ length: 4 }, (_, index) => index);
+const DUST = [
+  [8, 16, 3], [23, 72, 2], [38, 29, 4], [52, 88, 2], [64, 12, 3],
+  [73, 56, 2], [88, 24, 4], [92, 81, 2], [14, 43, 2], [47, 61, 3],
+];
+const RAIN = [
+  [8, 15, 118, -12], [48, 27, 176, -7], [4, 59, 148, -16], [58, 73, 132, -9],
+];
+const PAPER_LINES = Array.from({ length: 11 }, (_, index) => 12 + index * 8);
+const GARDEN = [
+  [9, 64, -18], [26, 78, 12], [48, 68, -8], [70, 82, 16], [88, 70, -14],
+];
+const SIGNAL_LINES = [14, 27, 43, 62, 78, 89];
+const HEARTS = [[10, 17], [29, 74], [48, 28], [67, 82], [86, 47], [78, 12]];
+const STARS = [[8, 21], [17, 74], [34, 13], [52, 66], [72, 26], [89, 78], [94, 39]];
+const BLOCKS = [
+  [7, 13, 82, 56, -7], [63, 8, 104, 70, 5], [18, 56, 122, 76, 3], [69, 67, 80, 98, -6],
+];
 
 export function AmbientField({ animated = true, backgroundStyle, children, theme }: AmbientFieldProps) {
-  const motion = useRef(new Animated.Value(0)).current;
+  const motion = useSharedValue(0);
+  const activeBackgroundStyle = backgroundStyle ?? theme.backgroundStyle;
 
   useEffect(() => {
+    cancelAnimation(motion);
+    motion.value = 0;
+
     if (!animated) {
-      motion.setValue(0);
       return;
     }
 
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(motion, {
-          toValue: 1,
-          duration: AMBIENT_MOTION_MS,
-          isInteraction: false,
-          useNativeDriver: true,
-        }),
-        Animated.timing(motion, {
-          toValue: 0,
-          duration: AMBIENT_MOTION_MS,
-          isInteraction: false,
-          useNativeDriver: true,
-        }),
-      ])
+    motion.value = withRepeat(
+      withTiming(1, {
+        duration: 9000,
+        easing: Easing.inOut(Easing.sin),
+        reduceMotion: ReduceMotion.System,
+      }),
+      -1,
+      true
     );
 
-    animation.start();
-    return () => animation.stop();
+    return () => cancelAnimation(motion);
   }, [animated, motion]);
 
-  const motes = useMemo(() => FIELD_BY_THEME[theme.id].filter((_, index) => index < 4), [theme.id]);
-  const activeBackgroundStyle = backgroundStyle ?? theme.backgroundStyle;
+  const fieldMotion = useAnimatedStyle(() => ({
+    opacity: 0.82 + motion.value * 0.18,
+    transform: [{ translateX: -3 + motion.value * 6 }, { translateY: 4 - motion.value * 8 }],
+  }));
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {motes.map((mote, index) => {
-        const translateY = motion.interpolate({
-          inputRange: [0, 1],
-          outputRange: [theme.id === 'moss' ? 8 : -5, theme.id === 'moss' ? -12 : 10],
-        });
-        const opacity = motion.interpolate({
-          inputRange: [0, 0.5, 1],
-          outputRange: [0.12 + mote.delay * 0.16, 0.36, 0.1],
-        });
-
-        return (
-          <Animated.View
-            key={`${theme.id}-${index}`}
-            pointerEvents="none"
-            style={[
-              styles.mote,
-              {
-                backgroundColor: index % 2 === 0 ? theme.accent : theme.secondary,
-                borderRadius:
-                  activeBackgroundStyle === 'hearts'
-                    ? mote.size
-                    : activeBackgroundStyle === 'orbit'
-                      ? 999
-                      : activeBackgroundStyle === 'paper' || activeBackgroundStyle === 'blocks'
-                        ? 8
-                        : activeBackgroundStyle === 'signal'
-                          ? 2
-                          : 4,
-                height:
-                  activeBackgroundStyle === 'hearts'
-                    ? mote.size * 0.62
-                    : activeBackgroundStyle === 'orbit'
-                      ? mote.size * 1.1
-                      : activeBackgroundStyle === 'signal'
-                    ? mote.size * 0.18
-                    : activeBackgroundStyle === 'garden'
-                      ? mote.size * 1.35
-                      : activeBackgroundStyle === 'blocks'
-                        ? mote.size * 0.92
-                        : mote.size * 0.72,
-                left: `${mote.x}%`,
-                opacity,
-                top: `${mote.y}%`,
-                transform: [
-                  { translateY },
-                  { rotate: activeBackgroundStyle === 'signal' ? '-18deg' : activeBackgroundStyle === 'hearts' ? '45deg' : index % 2 === 0 ? '8deg' : '-10deg' },
-                ],
-                width:
-                  activeBackgroundStyle === 'hearts'
-                    ? mote.size * 0.62
-                    : activeBackgroundStyle === 'orbit'
-                      ? mote.size * 1.1
-                      : activeBackgroundStyle === 'signal'
-                        ? mote.size * 2.7
-                        : activeBackgroundStyle === 'blocks'
-                          ? mote.size * 1.8
-                          : mote.size * 1.5,
-              },
-            ]}
-          >
-            {activeBackgroundStyle === 'orbit' ? <View style={[styles.orbitCore, { borderColor: theme.secondary }]} /> : null}
-          </Animated.View>
-        );
-      })}
-      {EXTRA_MARKS.map((mark) => {
-        const drift = motion.interpolate({
-          inputRange: [0, 1],
-          outputRange: [mark % 2 === 0 ? -8 : 8, mark % 2 === 0 ? 12 : -12],
-        });
-        const size = 14 + ((mark * 11) % 36);
-
-        return (
-          <Animated.View
-            key={`${activeBackgroundStyle}-extra-${mark}`}
-            pointerEvents="none"
-            style={[
-              styles.extraMark,
-              {
-                backgroundColor: mark % 2 === 0 ? theme.accent : theme.secondary,
-                borderRadius:
-                  activeBackgroundStyle === 'hearts'
-                    ? 999
-                    : activeBackgroundStyle === 'orbit'
-                      ? 999
-                      : activeBackgroundStyle === 'signal'
-                    ? 2
-                    : activeBackgroundStyle === 'paper' || activeBackgroundStyle === 'blocks'
-                      ? 3
-                      : activeBackgroundStyle === 'garden'
-                        ? 999
-                        : 6,
-                height:
-                  activeBackgroundStyle === 'hearts'
-                    ? size * 0.54
-                    : activeBackgroundStyle === 'orbit'
-                      ? size * 1.15
-                      : activeBackgroundStyle === 'signal'
-                    ? 3
-                    : activeBackgroundStyle === 'paper' || activeBackgroundStyle === 'blocks'
-                      ? size * 1.25
-                      : activeBackgroundStyle === 'mist'
-                        ? size * 0.44
-                        : size,
-                left: `${(mark * 19 + 8) % 92}%`,
-                opacity: activeBackgroundStyle === 'void' ? 0.12 : activeBackgroundStyle === 'hearts' ? 0.2 : 0.16,
-                top: `${(mark * 13 + 10) % 88}%`,
-                transform: [
-                  { translateX: drift },
-                  {
-                    rotate:
-                      activeBackgroundStyle === 'signal'
-                        ? '-10deg'
-                        : activeBackgroundStyle === 'hearts'
-                          ? '45deg'
-                        : activeBackgroundStyle === 'garden'
-                          ? `${mark % 2 === 0 ? -24 : 28}deg`
-                          : `${mark % 2 === 0 ? 7 : -9}deg`,
-                  },
-                ],
-                width:
-                  activeBackgroundStyle === 'hearts'
-                    ? size * 0.54
-                    : activeBackgroundStyle === 'orbit'
-                      ? size * 1.15
-                      : activeBackgroundStyle === 'signal'
-                    ? size * 3.8
-                    : activeBackgroundStyle === 'mist'
-                      ? size * 3.4
-                      : activeBackgroundStyle === 'paper'
-                        ? size * 1.8
-                        : size,
-              },
-            ]}
-          >
-            {activeBackgroundStyle === 'hearts' ? (
-              <>
-                <View style={[styles.heartLobe, { backgroundColor: mark % 2 === 0 ? theme.accent : theme.secondary }]} />
-                <View style={[styles.heartLobe, styles.heartLobeRight, { backgroundColor: mark % 2 === 0 ? theme.accent : theme.secondary }]} />
-              </>
-            ) : null}
-          </Animated.View>
-        );
-      })}
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, fieldMotion]}>
+        <BackgroundArtwork backgroundStyle={activeBackgroundStyle} theme={theme} />
+      </Animated.View>
       {children}
     </View>
   );
 }
 
+export function BackgroundArtwork({ backgroundStyle, theme }: { backgroundStyle: DhuloTheme['backgroundStyle']; theme: DhuloTheme }) {
+  if (backgroundStyle === 'mist') {
+    return (
+      <View style={StyleSheet.absoluteFill}>
+        {RAIN.map(([left, top, width, rotate], index) => (
+          <View
+            key={index}
+            style={[
+              styles.rainStroke,
+              {
+                backgroundColor: index % 2 ? theme.secondary : theme.accent,
+                left: `${left}%`,
+                opacity: 0.07 + index * 0.018,
+                top: `${top}%`,
+                transform: [{ rotate: `${rotate}deg` }],
+                width,
+              },
+            ]}
+          />
+        ))}
+        <View style={[styles.mistPool, { backgroundColor: theme.secondary }]} />
+      </View>
+    );
+  }
+
+  if (backgroundStyle === 'paper') {
+    return (
+      <View style={StyleSheet.absoluteFill}>
+        <View style={[styles.paperMargin, { backgroundColor: theme.secondary }]} />
+        {PAPER_LINES.map((top, index) => (
+          <View key={top} style={[styles.paperRule, { backgroundColor: theme.accent, opacity: index % 4 === 0 ? 0.13 : 0.075, top: `${top}%` }]} />
+        ))}
+        {DUST.slice(0, 7).map(([left, top, size], index) => (
+          <View
+            key={index}
+            style={[
+              styles.fibre,
+              {
+                backgroundColor: index % 2 ? theme.secondary : theme.accent,
+                height: 1,
+                left: `${left}%`,
+                top: `${top}%`,
+                transform: [{ rotate: `${index * 17 - 29}deg` }],
+                width: size * 5,
+              },
+            ]}
+          />
+        ))}
+      </View>
+    );
+  }
+
+  if (backgroundStyle === 'garden') {
+    return (
+      <View style={StyleSheet.absoluteFill}>
+        {GARDEN.map(([left, top, rotate], index) => (
+          <View key={index} style={[styles.stem, { backgroundColor: theme.accent, left: `${left}%`, top: `${top}%`, transform: [{ rotate: `${rotate}deg` }] }]}>
+            <View style={[styles.leaf, styles.leafLeft, { backgroundColor: theme.secondary }]} />
+            <View style={[styles.leaf, styles.leafRight, { backgroundColor: theme.accent }]} />
+          </View>
+        ))}
+        <View style={[styles.gardenMoon, { borderColor: theme.secondary }]} />
+      </View>
+    );
+  }
+
+  if (backgroundStyle === 'signal') {
+    return (
+      <View style={StyleSheet.absoluteFill}>
+        {SIGNAL_LINES.map((top, index) => (
+          <View
+            key={top}
+            style={[
+              styles.signalLine,
+              {
+                backgroundColor: index === 2 ? theme.accent : theme.secondary,
+                left: `${index % 2 ? 18 : 4}%`,
+                opacity: index === 2 ? 0.24 : 0.08,
+                top: `${top}%`,
+                width: `${index % 3 === 0 ? 56 : 78}%`,
+              },
+            ]}
+          />
+        ))}
+        <View style={[styles.signalDial, { borderColor: theme.accent }]} />
+        <View style={[styles.signalDot, { backgroundColor: theme.accent }]} />
+        <Text style={[styles.frequency, { color: theme.secondary }]}>98.7</Text>
+      </View>
+    );
+  }
+
+  if (backgroundStyle === 'hearts') {
+    return (
+      <View style={StyleSheet.absoluteFill}>
+        {HEARTS.map(([left, top], index) => (
+          <View key={index} style={[styles.heart, { left: `${left}%`, opacity: 0.09 + index * 0.014, top: `${top}%`, transform: [{ rotate: `${index % 2 ? 36 : 51}deg` }] }]}>
+            <View style={[styles.heartBody, { backgroundColor: index % 2 ? theme.secondary : theme.accent }]} />
+            <View style={[styles.heartLobe, styles.heartLobeLeft, { backgroundColor: index % 2 ? theme.secondary : theme.accent }]} />
+            <View style={[styles.heartLobe, styles.heartLobeRight, { backgroundColor: index % 2 ? theme.secondary : theme.accent }]} />
+          </View>
+        ))}
+        <Text style={[styles.doodleNote, { color: theme.accent }]}>oh, well.</Text>
+      </View>
+    );
+  }
+
+  if (backgroundStyle === 'orbit') {
+    return (
+      <View style={StyleSheet.absoluteFill}>
+        <View style={[styles.orbit, styles.orbitLarge, { borderColor: theme.accent }]} />
+        <View style={[styles.orbit, styles.orbitSmall, { borderColor: theme.secondary }]} />
+        <View style={[styles.planet, { backgroundColor: theme.accent }]} />
+        {STARS.map(([left, top], index) => (
+          <View key={index} style={[styles.star, { backgroundColor: index % 2 ? theme.secondary : theme.accent, left: `${left}%`, top: `${top}%` }]} />
+        ))}
+      </View>
+    );
+  }
+
+  if (backgroundStyle === 'blocks') {
+    return (
+      <View style={StyleSheet.absoluteFill}>
+        {BLOCKS.map(([left, top, width, height, rotate], index) => (
+          <View
+            key={index}
+            style={[
+              styles.collageCard,
+              {
+                backgroundColor: index % 2 ? theme.elevated : theme.surface,
+                borderColor: index % 2 ? theme.secondary : theme.accent,
+                height,
+                left: `${left}%`,
+                top: `${top}%`,
+                transform: [{ rotate: `${rotate}deg` }],
+                width,
+              },
+            ]}>
+            <View style={[styles.collageLine, { backgroundColor: theme.muted, width: '68%' }]} />
+            <View style={[styles.collageLine, { backgroundColor: theme.faint, width: '44%' }]} />
+          </View>
+        ))}
+        <View style={[styles.collageTape, { backgroundColor: theme.accent }]} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={StyleSheet.absoluteFill}>
+      {DUST.map(([left, top, size], index) => (
+        <View
+          key={index}
+          style={[
+            styles.dust,
+            {
+              backgroundColor: index % 3 === 0 ? theme.secondary : theme.accent,
+              height: size,
+              left: `${left}%`,
+              opacity: 0.09 + (index % 4) * 0.025,
+              top: `${top}%`,
+              width: size,
+            },
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  collageCard: {
+    borderCurve: 'continuous',
+    borderRadius: 7,
+    borderWidth: 1,
+    gap: 9,
+    opacity: 0.13,
+    padding: 12,
+    position: 'absolute',
+  },
+  collageLine: {
+    borderRadius: 99,
+    height: 3,
+  },
+  collageTape: {
+    height: 20,
+    left: '42%',
+    opacity: 0.14,
+    position: 'absolute',
+    top: '51%',
+    transform: [{ rotate: '-9deg' }],
+    width: 76,
+  },
   container: {
     flex: 1,
     overflow: 'hidden',
   },
-  mote: {
+  doodleNote: {
+    bottom: '13%',
+    fontSize: 17,
+    fontStyle: 'italic',
+    fontWeight: '700',
+    opacity: 0.18,
+    position: 'absolute',
+    right: '12%',
+    transform: [{ rotate: '-7deg' }],
+  },
+  dust: {
+    borderRadius: 99,
     position: 'absolute',
   },
-  extraMark: {
+  fibre: {
+    opacity: 0.12,
     position: 'absolute',
   },
-  heartLobe: {
-    borderRadius: 999,
-    height: '100%',
-    left: '-45%',
+  frequency: {
+    fontSize: 12,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '800',
+    letterSpacing: 2,
+    opacity: 0.13,
     position: 'absolute',
-    top: 0,
-    width: '100%',
+    right: '9%',
+    top: '35%',
   },
-  heartLobeRight: {
-    left: 0,
-    top: '-45%',
-  },
-  orbitCore: {
-    ...StyleSheet.absoluteFillObject,
+  gardenMoon: {
     borderRadius: 999,
     borderWidth: 2,
-    opacity: 0.5,
-    transform: [{ scale: 1.42 }],
+    height: 110,
+    opacity: 0.08,
+    position: 'absolute',
+    right: '-4%',
+    top: '9%',
+    width: 110,
+  },
+  heart: {
+    height: 24,
+    position: 'absolute',
+    width: 24,
+  },
+  heartBody: {
+    bottom: 1,
+    height: 17,
+    left: 4,
+    position: 'absolute',
+    width: 17,
+  },
+  heartLobe: {
+    borderRadius: 99,
+    height: 17,
+    position: 'absolute',
+    width: 17,
+  },
+  heartLobeLeft: {
+    left: 0,
+    top: 3,
+  },
+  heartLobeRight: {
+    left: 7,
+    top: -4,
+  },
+  leaf: {
+    borderRadius: 999,
+    height: 18,
+    opacity: 0.18,
+    position: 'absolute',
+    width: 9,
+  },
+  leafLeft: {
+    left: -8,
+    top: 18,
+    transform: [{ rotate: '-42deg' }],
+  },
+  leafRight: {
+    right: -8,
+    top: 38,
+    transform: [{ rotate: '42deg' }],
+  },
+  mistPool: {
+    borderRadius: 999,
+    bottom: '-8%',
+    height: 180,
+    left: '12%',
+    opacity: 0.055,
+    position: 'absolute',
+    transform: [{ rotate: '-5deg' }],
+    width: '90%',
+  },
+  orbit: {
+    borderRadius: 999,
+    borderWidth: 2,
+    opacity: 0.1,
+    position: 'absolute',
+    transform: [{ rotate: '-18deg' }],
+  },
+  orbitLarge: {
+    height: 310,
+    left: '-20%',
+    top: '12%',
+    width: 480,
+  },
+  orbitSmall: {
+    bottom: '-5%',
+    height: 210,
+    right: '-18%',
+    width: 310,
+  },
+  paperMargin: {
+    bottom: 0,
+    left: '15%',
+    opacity: 0.09,
+    position: 'absolute',
+    top: 0,
+    width: 1,
+  },
+  paperRule: {
+    height: 1,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+  },
+  planet: {
+    borderRadius: 999,
+    height: 22,
+    left: '58%',
+    opacity: 0.2,
+    position: 'absolute',
+    top: '29%',
+    width: 22,
+  },
+  rainStroke: {
+    borderRadius: 99,
+    height: 32,
+    position: 'absolute',
+  },
+  signalDial: {
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 118,
+    opacity: 0.1,
+    position: 'absolute',
+    right: '-2%',
+    top: '22%',
+    width: 118,
+  },
+  signalDot: {
+    borderRadius: 99,
+    height: 7,
+    opacity: 0.42,
+    position: 'absolute',
+    right: '12%',
+    top: '31%',
+    width: 7,
+  },
+  signalLine: {
+    height: 2,
+    position: 'absolute',
+  },
+  star: {
+    borderRadius: 99,
+    height: 3,
+    opacity: 0.24,
+    position: 'absolute',
+    width: 3,
+  },
+  stem: {
+    borderRadius: 99,
+    height: 118,
+    opacity: 0.26,
+    position: 'absolute',
+    width: 2,
   },
 });

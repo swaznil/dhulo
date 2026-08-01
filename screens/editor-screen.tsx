@@ -2,7 +2,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AmbientBackground } from '@/components/ambient-background';
@@ -184,17 +184,18 @@ export function EditorScreen({
           />
         )}
 
-          <NoteOptionsSheet
-            duration={duration}
-            noteThemeId={noteThemeId}
-            onClose={() => setSettingsOpen(false)}
-            onDurationChange={onDurationChange}
-            onStyleChange={onStyleChange}
-            onThemeChange={onThemeChange}
-            styleId={styleId}
-            theme={theme}
-            visible={settingsOpen}
-          />
+          {settingsOpen ? (
+            <NoteOptionsSheet
+              duration={duration}
+              noteThemeId={noteThemeId}
+              onClose={() => setSettingsOpen(false)}
+              onDurationChange={onDurationChange}
+              onStyleChange={onStyleChange}
+              onThemeChange={onThemeChange}
+              styleId={styleId}
+              theme={theme}
+            />
+          ) : null}
         </KeyboardAvoidingView>
       </SafeAreaView>
     </AmbientBackground>
@@ -210,7 +211,6 @@ function NoteOptionsSheet({
   onThemeChange,
   styleId,
   theme,
-  visible,
 }: {
   duration: number;
   noteThemeId: ThemeId;
@@ -220,34 +220,17 @@ function NoteOptionsSheet({
   onThemeChange: (themeId: ThemeId) => void;
   styleId: DecayStyle;
   theme: typeof DHULO_THEMES.obsidian;
-  visible: boolean;
 }) {
-  const entrance = useSharedValue(0);
-
-  useEffect(() => {
-    entrance.value = withTiming(visible ? 1 : 0, {
-      duration: visible ? 220 : 160,
-      easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.quad),
-      reduceMotion: ReduceMotion.System,
-    });
-  }, [entrance, visible]);
-
-  const backdropStyle = useAnimatedStyle(() => ({ opacity: entrance.value }));
-  const sheetStyle = useAnimatedStyle(() => ({
-    opacity: entrance.value,
-    transform: [{ translateY: (1 - entrance.value) * 36 }],
-  }));
-
   return (
-    <View pointerEvents={visible ? 'auto' : 'none'} style={styles.sheetLayer}>
-      <Animated.View pointerEvents="none" style={[styles.sheetBackdrop, backdropStyle]} />
+    <View style={styles.sheetLayer}>
+      <Animated.View entering={FadeIn.duration(140)} pointerEvents="none" style={styles.sheetBackdrop} />
       <Pressable accessibilityLabel="Close note options" onPress={onClose} style={StyleSheet.absoluteFill} />
-      <Animated.View style={[styles.sheet, { backgroundColor: theme.surface, borderColor: theme.border }, sheetStyle]}>
+      <Animated.View entering={FadeInUp.duration(200)} style={[styles.sheet, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         <ScrollView contentContainerStyle={styles.sheetContent} nestedScrollEnabled showsVerticalScrollIndicator={false}>
           <View style={styles.sheetHeader}>
             <View>
-              <Text style={[styles.sheetTitle, { color: theme.text }]}>Note behavior</Text>
-              <Text style={[styles.sheetSubtitle, { color: theme.muted }]}>Every note fades after this timer.</Text>
+              <Text style={[styles.sheetTitle, { color: theme.text }]}>What happens next</Text>
+              <Text style={[styles.sheetSubtitle, { color: theme.muted }]}>Set the clock and choose how the words change.</Text>
             </View>
             <Pressable accessibilityLabel="Close" accessibilityRole="button" onPress={onClose} style={[styles.iconButton, { backgroundColor: theme.elevated }]}>
               <MaterialIcons name="close" size={20} color={theme.text} />
@@ -267,7 +250,7 @@ function NoteOptionsSheet({
           <DurationWheel onChange={onDurationChange} theme={theme} value={duration} />
 
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionLabel, { color: theme.faint }]}>Paper tone</Text>
+            <Text style={[styles.sectionLabel, { color: theme.faint }]}>Colour</Text>
             <Text style={[styles.sectionValue, { color: theme.muted }]}>{DHULO_THEMES[noteThemeId].name}</Text>
           </View>
           <ScrollView contentContainerStyle={styles.themeStrip} horizontal nestedScrollEnabled showsHorizontalScrollIndicator={false}>

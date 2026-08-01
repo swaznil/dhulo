@@ -31,7 +31,7 @@ type HomeSort = 'ending' | 'newest';
 const FILTERS: { id: HomeFilter; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'active', label: 'Active' },
-  { id: 'preserved', label: 'Preserved' },
+  { id: 'preserved', label: 'On hold' },
   { id: 'expired', label: 'Expired' },
 ];
 const brandMark = require('@/assets/images/brand-mark.png');
@@ -100,7 +100,7 @@ export const HomeScreen = memo(function HomeScreen({
               <ExpoImage contentFit="contain" source={brandMark} style={styles.brandMark} />
               <Text style={[styles.title, { color: theme.text }]}>Dhulo</Text>
             </View>
-            <Text style={[styles.subtitle, { color: theme.faint }]}>Temporary journal</Text>
+            <Text style={[styles.subtitle, { color: theme.faint }]}>Notes with an ending</Text>
           </View>
           <Pressable accessibilityLabel="Open settings" accessibilityRole="button" onPress={onOpenSettings} style={[styles.iconButton, { backgroundColor: theme.surface }]}>
             <MaterialIcons name="settings" size={22} color={theme.text} />
@@ -207,20 +207,31 @@ function EmptyState({
   onCreate: () => void;
   theme: typeof DHULO_THEMES.obsidian;
 }) {
+  if (filtered) {
+    return (
+      <View style={styles.filteredEmpty}>
+        <View style={[styles.filteredIcon, { backgroundColor: theme.surface }]}>
+          <MaterialIcons color={theme.faint} name="search-off" size={25} />
+        </View>
+        <Text style={[styles.emptyTitle, { color: theme.text }]}>No notes here</Text>
+        <Text style={[styles.emptyText, { color: theme.muted }]}>Try another word or switch the filter.</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.emptyWrap}>
-      <View style={[styles.emptyBook, { backgroundColor: theme.surface }]}>
-        <View style={[styles.emptyLine, { backgroundColor: theme.border, width: '70%' }]} />
-        <View style={[styles.emptyLine, { backgroundColor: theme.border, width: '52%' }]} />
-        <View style={[styles.emptyLine, { backgroundColor: theme.border, width: '38%' }]} />
-      </View>
-      <Text style={[styles.emptyTitle, { color: theme.text }]}>
-        {filtered ? 'Nothing matches' : 'Nothing here lasts forever'}
-      </Text>
-      <Text style={[styles.emptyText, { color: theme.muted }]}>
-        {filtered ? 'Try another filter or a softer word.' : 'Write freely, then choose how long the thought needs to stay.'}
-      </Text>
-      {!filtered ? (
+      <View style={[styles.comfortCard, { backgroundColor: theme.surface, borderColor: theme.border, boxShadow: `0 18px 50px ${theme.shadow}33` }]}>
+        <View style={styles.comfortTopRow}>
+          <View style={[styles.comfortIcon, { backgroundColor: theme.elevated }]}>
+            <MaterialIcons color={theme.accent} name="edit-note" size={25} />
+          </View>
+          <Text style={[styles.comfortEyebrow, { color: theme.faint }]}>THIS SPACE IS YOURS</Text>
+        </View>
+        <Text style={[styles.comfortTitle, { color: theme.text }]}>What has been sitting heavy today?</Text>
+        <Text style={[styles.comfortText, { color: theme.muted }]}>
+          You do not have to explain it perfectly. Put it down in your own words and let the note carry it for a while.
+        </Text>
         <Pressable
           accessibilityRole="button"
           onPress={onCreate}
@@ -229,9 +240,16 @@ function EmptyState({
             { backgroundColor: theme.text, opacity: pressed ? 0.72 : 1 },
           ]}>
           <MaterialIcons color={theme.background} name="edit" size={18} />
-          <Text style={[styles.emptyButtonText, { color: theme.background }]}>Write a note</Text>
+          <Text style={[styles.emptyButtonText, { color: theme.background }]}>Write what’s on my mind</Text>
         </Pressable>
-      ) : null}
+        <View style={[styles.comfortSteps, { borderTopColor: theme.border }]}>
+          <Text style={[styles.comfortStep, { color: theme.faint }]}>WRITE</Text>
+          <MaterialIcons color={theme.border} name="arrow-forward" size={14} />
+          <Text style={[styles.comfortStep, { color: theme.faint }]}>WATCH IT FADE</Text>
+          <MaterialIcons color={theme.border} name="arrow-forward" size={14} />
+          <Text style={[styles.comfortStep, { color: theme.faint }]}>LET IT GO</Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -253,18 +271,59 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '900',
   },
-  emptyBook: {
+  comfortCard: {
     borderCurve: 'continuous',
     borderRadius: 24,
-    gap: 13,
-    height: 150,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    width: 132,
+    borderWidth: 1,
+    maxWidth: 560,
+    padding: 22,
+    width: '100%',
   },
-  emptyLine: {
-    borderRadius: 999,
-    height: 7,
+  comfortEyebrow: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1.1,
+  },
+  comfortIcon: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 12,
+    height: 42,
+    justifyContent: 'center',
+    width: 42,
+  },
+  comfortStep: {
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.7,
+  },
+  comfortSteps: {
+    alignItems: 'center',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 22,
+    paddingTop: 15,
+  },
+  comfortText: {
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 23,
+    marginTop: 10,
+    maxWidth: 480,
+  },
+  comfortTitle: {
+    fontSize: 27,
+    fontWeight: '900',
+    letterSpacing: -0.6,
+    lineHeight: 33,
+    marginTop: 18,
+    maxWidth: 500,
+  },
+  comfortTopRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 11,
   },
   emptyText: {
     fontSize: 15,
@@ -287,7 +346,8 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     flexDirection: 'row',
     gap: 8,
-    marginTop: 20,
+    alignSelf: 'flex-start',
+    marginTop: 22,
     paddingHorizontal: 19,
     paddingVertical: 13,
   },
@@ -298,15 +358,29 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 22,
     fontWeight: '900',
-    marginTop: 22,
+    marginTop: 16,
     textAlign: 'center',
   },
   emptyWrap: {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    minHeight: 460,
+    minHeight: 430,
+    paddingHorizontal: 10,
+  },
+  filteredEmpty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 360,
     paddingHorizontal: 40,
+  },
+  filteredIcon: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 16,
+    height: 54,
+    justifyContent: 'center',
+    width: 54,
   },
   fab: {
     alignItems: 'center',

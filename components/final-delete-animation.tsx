@@ -134,8 +134,8 @@ export function FinalDeleteAnimation({ note, onFinish }: { note: DhuloNote; onFi
       </View>
 
       <Animated.View style={[styles.releaseMessage, messageStyle]}>
-        <Text style={styles.releaseEyebrow}>RELEASED</Text>
-        <Text style={styles.releaseText}>It no longer needs to stay.</Text>
+        <Text style={[styles.releaseEyebrow, { color: theme.accent }]}>GONE</Text>
+        <Text style={[styles.releaseText, { color: theme.text }]}>Removed from this device.</Text>
       </Animated.View>
     </View>
   );
@@ -219,7 +219,7 @@ function ReleaseStrip({
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#080604',
+    backgroundColor: '#03060D',
   },
   body: {
     fontSize: 15,
@@ -256,7 +256,6 @@ const styles = StyleSheet.create({
     top: '50%',
   },
   releaseEyebrow: {
-    color: '#E9B86B',
     fontSize: 11,
     fontWeight: '900',
     letterSpacing: 2,
@@ -269,7 +268,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   releaseText: {
-    color: '#FFF5E6',
     fontSize: 15,
     fontWeight: '700',
   },

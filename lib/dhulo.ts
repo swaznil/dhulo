@@ -53,8 +53,8 @@ export type DecayOption = {
 export const DHULO_THEMES: Record<ThemeId, DhuloTheme> = {
   obsidian: {
     id: 'obsidian',
-    name: 'Obsidian',
-    caption: 'Dark walnut, warm paper, quiet focus',
+    name: 'Cinder',
+    caption: 'Brown and amber.',
     mode: 'dark',
     backgroundStyle: 'void',
     background: '#120D0A',
@@ -71,7 +71,7 @@ export const DHULO_THEMES: Record<ThemeId, DhuloTheme> = {
   graphite: {
     id: 'graphite',
     name: 'Graphite',
-    caption: 'Matte grey, studio notebook',
+    caption: 'Charcoal grey.',
     mode: 'dark',
     backgroundStyle: 'mist',
     background: '#111214',
@@ -87,8 +87,8 @@ export const DHULO_THEMES: Record<ThemeId, DhuloTheme> = {
   },
   noir: {
     id: 'noir',
-    name: 'Noir',
-    caption: 'Black ink, blue signal',
+    name: 'Midnight',
+    caption: 'Navy and sky blue.',
     mode: 'dark',
     backgroundStyle: 'signal',
     background: '#060911',
@@ -105,7 +105,7 @@ export const DHULO_THEMES: Record<ThemeId, DhuloTheme> = {
   aurora: {
     id: 'aurora',
     name: 'Aurora',
-    caption: 'Violet night, green pulse',
+    caption: 'Violet and mint.',
     mode: 'dark',
     backgroundStyle: 'orbit',
     background: '#10061f',
@@ -122,7 +122,7 @@ export const DHULO_THEMES: Record<ThemeId, DhuloTheme> = {
   moss: {
     id: 'moss',
     name: 'Moss',
-    caption: 'Deep green, living archive',
+    caption: 'Forest green.',
     mode: 'dark',
     backgroundStyle: 'garden',
     background: '#08120d',
@@ -139,7 +139,7 @@ export const DHULO_THEMES: Record<ThemeId, DhuloTheme> = {
   paper: {
     id: 'paper',
     name: 'Cloud',
-    caption: 'Soft white, cool ink',
+    caption: 'Off-white and blue.',
     mode: 'light',
     backgroundStyle: 'blocks',
     background: '#eef2f7',
@@ -156,7 +156,7 @@ export const DHULO_THEMES: Record<ThemeId, DhuloTheme> = {
   daylight: {
     id: 'daylight',
     name: 'Daylight',
-    caption: 'Warm paper, brass and teal',
+    caption: 'Warm white and rust.',
     mode: 'light',
     backgroundStyle: 'paper',
     background: '#f8f4ec',
@@ -173,7 +173,7 @@ export const DHULO_THEMES: Record<ThemeId, DhuloTheme> = {
   petal: {
     id: 'petal',
     name: 'Petal',
-    caption: 'Clean blush, soft hearts',
+    caption: 'Soft pink and berry.',
     mode: 'light',
     backgroundStyle: 'hearts',
     background: '#fff1f5',
@@ -190,7 +190,7 @@ export const DHULO_THEMES: Record<ThemeId, DhuloTheme> = {
   archive: {
     id: 'archive',
     name: 'Archive',
-    caption: 'Ledger green, abstract cards',
+    caption: 'Paper green.',
     mode: 'light',
     backgroundStyle: 'blocks',
     background: '#edf5ee',
@@ -207,7 +207,7 @@ export const DHULO_THEMES: Record<ThemeId, DhuloTheme> = {
   signal: {
     id: 'signal',
     name: 'Signal',
-    caption: 'Ink blue, golden lines',
+    caption: 'Deep blue and yellow.',
     mode: 'dark',
     backgroundStyle: 'signal',
     background: '#061426',
@@ -240,7 +240,7 @@ export function normalizeThemeId(themeId?: string): ThemeId {
     return themeId as ThemeId;
   }
 
-  return 'obsidian';
+  return 'noir';
 }
 
 export function normalizeDecayStyle(style?: string): DecayStyle {
@@ -264,10 +264,10 @@ export function normalizeDecayStyle(style?: string): DecayStyle {
 }
 
 export const DECAY_OPTIONS: DecayOption[] = [
-  { id: 'ash', name: 'Ash', caption: 'Embers darken the page until it releases.' },
-  { id: 'drift', name: 'Drift', caption: 'Letters pull apart and small pieces slip out.' },
-  { id: 'blur', name: 'Blur', caption: 'The memory softens into atmosphere.' },
-  { id: 'scramble', name: 'Scramble', caption: 'Letters lose their order before vanishing.' },
+  { id: 'ash', name: 'Ash', caption: 'Burns away from the edges.' },
+  { id: 'drift', name: 'Drift', caption: 'Letters move apart.' },
+  { id: 'blur', name: 'Blur', caption: 'Slowly loses focus.' },
+  { id: 'scramble', name: 'Scramble', caption: 'Letters swap places.' },
 ];
 
 export const DURATION_PRESETS = [15, 30, 60, 180, 720, 1440];
@@ -291,7 +291,7 @@ export function getRemainingLabel(note: DhuloNote, now: number) {
   }
 
   if (note.isPreserved) {
-    return 'preserved';
+    return 'on hold';
   }
 
   const remainingMs = Math.max(note.createdAt + note.durationMinutes * 60 * 1000 - now, 0);
