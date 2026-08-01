@@ -2,7 +2,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { ComponentProps, useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, ScrollView, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, ScrollView, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AmbientBackground } from '@/components/ambient-background';
@@ -20,8 +20,6 @@ type Props = {
   onBack: () => void;
   onContinue: () => void;
   onDelete: () => void;
-  onDuplicate: () => void;
-  onExtend: (minutes: number) => void;
   onPreserve: () => void;
   onQuickBurn: () => void;
 };
@@ -31,8 +29,6 @@ export function ReaderScreen({
   onBack,
   onContinue,
   onDelete,
-  onDuplicate,
-  onExtend,
   onPreserve,
   onQuickBurn,
 }: Props) {
@@ -48,6 +44,7 @@ export function ReaderScreen({
   const displayProgress = fastForwardProgress ?? progress;
   const isFastForwarding = fastForwardProgress !== null;
   const displayGone = isGone || displayProgress >= 1;
+  const residueProgress = displayGone ? 0.88 : displayProgress;
   const displayRemaining = isFastForwarding
     ? `Moving ahead · ${Math.round(displayProgress * 100)}%`
     : displayGone
@@ -114,13 +111,6 @@ export function ReaderScreen({
     animationFrame.current = requestAnimationFrame(advance);
   }
 
-  function shareNote() {
-    Share.share({
-      message: [note.title, note.body].filter(Boolean).join('\n\n'),
-      title: note.title,
-    }).catch(() => undefined);
-  }
-
   return (
     <AmbientBackground theme={theme}>
       <StatusBar style={theme.mode === 'light' ? 'dark' : 'light'} />
@@ -135,7 +125,18 @@ export function ReaderScreen({
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <Text style={[styles.date, { color: theme.faint }]}>{displayGone ? 'READY TO REMOVE' : formatTimestamp(note.createdAt)}</Text>
-          <Text style={[styles.title, { color: theme.text }]}>{displayGone ? 'Nothing to bring back' : note.title}</Text>
+          <DecayText
+            color={theme.text}
+            lineHeight={40}
+            mutedColor={theme.faint}
+            now={now}
+            progress={residueProgress * 0.72}
+            seed={`${note.id}-reader-title`}
+            size={34}
+            styleId={note.decayStyle}
+            text={note.title || 'Untitled'}
+            weight="900"
+          />
           <Text accessibilityLiveRegion="polite" style={[styles.remaining, { color: theme.muted }]}>
             {displayRemaining}
           </Text>
@@ -143,28 +144,20 @@ export function ReaderScreen({
             <View style={[styles.progressFill, { backgroundColor: displayGone ? theme.secondary : theme.accent, width: `${displayProgress * 100}%` }]} />
           </View>
 
-          {displayGone ? (
-            <View style={[styles.gonePage, { borderColor: theme.border }]}>
-              <View style={[styles.goneRule, { backgroundColor: theme.border }]} />
-              <View style={[styles.goneRule, { backgroundColor: theme.border, width: '61%' }]} />
-              <View style={[styles.goneRule, { backgroundColor: theme.border, width: '34%' }]} />
-            </View>
-          ) : (
-            <View style={styles.page}>
-              <DecayImage accent={theme.accent} progress={displayProgress} styleId={note.decayStyle} surface={theme.surface} uri={note.imageUri} />
-              <DecayText
-                color={theme.text}
-                lineHeight={30}
-                mutedColor={theme.faint}
-                now={now}
-                progress={displayProgress}
-                seed={`${note.id}-reader`}
-                size={18}
-                styleId={note.decayStyle}
-                text={note.body || 'This note was an image.'}
-              />
-            </View>
-          )}
+          <View style={styles.page}>
+            <DecayImage accent={theme.accent} progress={residueProgress} styleId={note.decayStyle} surface={theme.surface} uri={note.imageUri} />
+            <DecayText
+              color={theme.text}
+              lineHeight={30}
+              mutedColor={theme.faint}
+              now={now}
+              progress={residueProgress}
+              seed={`${note.id}-reader`}
+              size={18}
+              styleId={note.decayStyle}
+              text={note.body || 'This note was an image.'}
+            />
+          </View>
 
           {displayGone ? (
             <View style={[styles.expiredCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -198,46 +191,9 @@ export function ReaderScreen({
             ) : null}
           </View>
 
-          {!displayGone && !isFastForwarding ? (
-            <View style={styles.quickActions}>
-              <Text style={[styles.quickLabel, { color: theme.faint }]}>MORE TIME</Text>
-              <View style={styles.quickRow}>
-                <MiniAction label="+1 hour" onPress={() => onExtend(60)} theme={theme} />
-                <MiniAction label="+1 day" onPress={() => onExtend(1440)} theme={theme} />
-                <MiniAction label="Duplicate" onPress={onDuplicate} theme={theme} />
-                <MiniAction label="Share" onPress={shareNote} theme={theme} />
-              </View>
-            </View>
-          ) : null}
         </ScrollView>
       </SafeAreaView>
     </AmbientBackground>
-  );
-}
-
-function MiniAction({
-  label,
-  onPress,
-  theme,
-}: {
-  label: string;
-  onPress: () => void;
-  theme: typeof DHULO_THEMES.obsidian;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.miniAction,
-        {
-          backgroundColor: theme.surface,
-          borderColor: theme.border,
-          opacity: pressed ? 0.65 : 1,
-        },
-      ]}>
-      <Text style={[styles.miniActionText, { color: theme.text }]}>{label}</Text>
-    </Pressable>
   );
 }
 
@@ -355,32 +311,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
     minHeight: 280,
   },
-  gonePage: {
-    borderCurve: 'continuous',
-    borderRadius: 4,
-    borderWidth: 1,
-    gap: 14,
-    marginTop: 18,
-    minHeight: 220,
-    opacity: 0.62,
-    padding: 28,
-  },
-  goneRule: {
-    borderRadius: 99,
-    height: 5,
-    width: '78%',
-  },
-  miniAction: {
-    borderCurve: 'continuous',
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  miniActionText: {
-    fontSize: 12,
-    fontWeight: '800',
-  },
   progressFill: {
     height: '100%',
   },
@@ -395,27 +325,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginTop: 7,
   },
-  quickActions: {
-    gap: 9,
-    marginTop: 24,
-  },
-  quickLabel: {
-    fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 0.9,
-  },
-  quickRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
   safeArea: {
     flex: 1,
-  },
-  title: {
-    fontSize: 34,
-    fontWeight: '900',
-    letterSpacing: 0,
-    lineHeight: 40,
   },
 });

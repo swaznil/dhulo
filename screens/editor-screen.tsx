@@ -1,8 +1,7 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
+import { Image, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AmbientBackground } from '@/components/ambient-background';
@@ -107,6 +106,16 @@ export function EditorScreen({
 
   const timestamp = useMemo(() => formatTimestamp(Date.now()), []);
 
+  const toggleNoteOptions = useCallback(() => {
+    if (settingsOpen) {
+      setSettingsOpen(false);
+      return;
+    }
+
+    Keyboard.dismiss();
+    setSettingsOpen(true);
+  }, [settingsOpen]);
+
   return (
     <AmbientBackground animated={false} theme={theme}>
       <StatusBar style={theme.mode === 'light' ? 'dark' : 'light'} />
@@ -121,7 +130,7 @@ export function EditorScreen({
               <Text style={[styles.editorStatusCaption, { color: theme.faint }]}>Close saves a draft</Text>
             </View>
             <View style={styles.headerActions}>
-              <Pressable accessibilityLabel="Note options" accessibilityRole="button" onPress={() => setSettingsOpen((open) => !open)} style={[styles.iconButton, { backgroundColor: theme.surface }]}>
+              <Pressable accessibilityLabel="Note options" accessibilityRole="button" onPress={toggleNoteOptions} style={[styles.iconButton, { backgroundColor: theme.surface }]}>
                 <MaterialIcons name="tune" size={21} color={theme.text} />
               </Pressable>
               <Pressable accessibilityRole="button" onPress={onSave} style={[styles.doneButton, { backgroundColor: theme.text }]}>
@@ -223,9 +232,9 @@ function NoteOptionsSheet({
 }) {
   return (
     <View style={styles.sheetLayer}>
-      <Animated.View entering={FadeIn.duration(140)} pointerEvents="none" style={styles.sheetBackdrop} />
+      <View pointerEvents="none" style={styles.sheetBackdrop} />
       <Pressable accessibilityLabel="Close note options" onPress={onClose} style={StyleSheet.absoluteFill} />
-      <Animated.View entering={FadeInUp.duration(200)} style={[styles.sheet, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+      <View style={[styles.sheet, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         <ScrollView contentContainerStyle={styles.sheetContent} nestedScrollEnabled showsVerticalScrollIndicator={false}>
           <View style={styles.sheetHeader}>
             <View>
@@ -275,7 +284,7 @@ function NoteOptionsSheet({
             })}
           </ScrollView>
         </ScrollView>
-      </Animated.View>
+      </View>
     </View>
   );
 }

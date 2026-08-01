@@ -22,7 +22,7 @@ function DecayImageInner({ uri, progress, styleId, accent, surface }: DecayImage
   const decay = clamp(progress);
   const blur =
     styleId === 'blur'
-      ? decay * 22
+      ? decay * 30
       : styleId === 'ash'
         ? decay * 3
         : styleId === 'scramble'

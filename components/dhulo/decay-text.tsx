@@ -44,7 +44,7 @@ function DecayTextInner({
         : visualProgress > 0.72
           ? mutedColor
           : color;
-  const opacityFloor = styleId === 'blur' ? 0.28 : styleId === 'drift' || styleId === 'scramble' ? 1 : 0.12;
+  const opacityFloor = styleId === 'blur' ? 0.16 : styleId === 'drift' || styleId === 'scramble' ? 1 : 0.12;
   const translateY = styleId === 'drift' ? visualProgress * 11 : 0;
   const translateX = styleId === 'blur' ? 0 : 0;
   const scaleY = 1;
@@ -58,12 +58,12 @@ function DecayTextInner({
           color: textColor,
           fontSize: size,
           lineHeight,
-          opacity: styleId === 'drift' || styleId === 'scramble' ? 1 : Math.max(opacityFloor, 1 - visualProgress * 0.76),
+          opacity: styleId === 'drift' || styleId === 'scramble' ? 1 : Math.max(opacityFloor, 1 - visualProgress * (styleId === 'blur' ? 0.9 : 0.76)),
           fontWeight: weight,
           letterSpacing: styleId === 'drift' ? visualProgress * 4.5 : 0,
-          textShadowColor: styleId === 'ash' ? '#f59e0b' : 'transparent',
-          textShadowOffset: { width: styleId === 'ash' ? visualProgress : 0, height: 0 },
-          textShadowRadius: styleId === 'ash' ? visualProgress * 4 : styleId === 'blur' ? visualProgress * 5 : 0,
+          textShadowColor: styleId === 'ash' ? '#f59e0b' : styleId === 'blur' ? mutedColor : 'transparent',
+          textShadowOffset: { width: styleId === 'ash' ? visualProgress : 0, height: styleId === 'blur' ? visualProgress * 1.5 : 0 },
+          textShadowRadius: styleId === 'ash' ? visualProgress * 4 : styleId === 'blur' ? visualProgress * 12 : 0,
           transform: [{ translateX }, { translateY }, { scaleY }],
         },
       ]}>

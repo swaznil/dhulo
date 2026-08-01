@@ -1,14 +1,15 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { StatusBar } from 'expo-status-bar';
 import { ComponentProps, ReactNode } from 'react';
-import { Alert, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AmbientBackground } from '@/components/ambient-background';
 import { DecayPreview } from '@/components/decay-preview';
+import { DurationWheel } from '@/components/duration-wheel';
 import { DecayStyle, DHULO_THEMES, ThemeId } from '@/lib/dhulo';
-import { DURATION_PRESETS } from '@/utils/constants';
-import { formatDuration } from '@/utils/note';
+
+const PROJECT_URL = 'https://github.com/swaznil/dhulo';
 
 type Props = {
   ambientMotionEnabled: boolean;
@@ -48,18 +49,7 @@ export function SettingsScreen({
   themeId,
 }: Props) {
   const theme = DHULO_THEMES[themeId];
-  async function shareApp() {
-    await Share.share({
-      message: 'I have been using Dhulo to write things down without keeping them forever.',
-    });
-  }
-
-  function showPrivacy() {
-    Alert.alert(
-      'Privacy and local storage',
-      'Dhulo stores notes, settings, profile details, and private copies of attached photos locally on this device. Nothing is uploaded by this app. Deleting the app or clearing app data removes this local content.'
-    );
-  }
+  const openProject = () => Linking.openURL(PROJECT_URL).catch(() => undefined);
 
   return (
     <AmbientBackground theme={theme}>
@@ -89,7 +79,7 @@ export function SettingsScreen({
               <Text style={[styles.settingTitle, { color: theme.text }]}>How long should they stay?</Text>
               <Text style={[styles.settingHint, { color: theme.muted }]}>New notes start with this amount of time.</Text>
             </View>
-            <DurationPresets onChange={onDefaultDurationChange} theme={theme} value={defaultDuration} />
+            <DurationWheel onChange={onDefaultDurationChange} theme={theme} value={defaultDuration} />
             <View style={[styles.divider, { backgroundColor: theme.border }]} />
             <View style={styles.settingCopy}>
               <Text style={[styles.settingTitle, { color: theme.text }]}>How should the words fade?</Text>
@@ -114,59 +104,13 @@ export function SettingsScreen({
           <Section title="Your space" theme={theme}>
             <ActionRow icon="palette" label="Colours and wallpaper" onPress={onPersonalizationPress} theme={theme} />
             <ActionRow icon="touch-app" label="Run the tutorial again" onPress={onGuidePress} theme={theme} />
-            <ActionRow icon="ios-share" label="Share Dhulo" onPress={shareApp} theme={theme} />
-            <ActionRow icon="privacy-tip" label="What stays on this device" onPress={showPrivacy} theme={theme} />
+            <ActionRow icon="code" label="GitHub project" onPress={openProject} theme={theme} />
+            <ActionRow icon="privacy-tip" label="Privacy policy" onPress={openProject} theme={theme} />
+            <ActionRow badge="Coming soon" disabled icon="ios-share" label="Share Dhulo" onPress={() => undefined} theme={theme} />
           </Section>
-
-          <View style={[styles.about, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <View style={[styles.aboutIcon, { backgroundColor: theme.elevated }]}>
-              <MaterialIcons name="lock-outline" size={20} color={theme.accent} />
-            </View>
-            <View style={styles.aboutCopy}>
-              <Text style={[styles.aboutTitle, { color: theme.text }]}>Private by default</Text>
-              <Text style={[styles.aboutText, { color: theme.muted }]}>
-                Your writing and attached photos stay on this device. Dhulo does not upload them or keep a hidden archive.
-              </Text>
-            </View>
-          </View>
         </ScrollView>
       </SafeAreaView>
     </AmbientBackground>
-  );
-}
-
-function DurationPresets({
-  onChange,
-  theme,
-  value,
-}: {
-  onChange: (minutes: number) => void;
-  theme: typeof DHULO_THEMES.obsidian;
-  value: number;
-}) {
-  return (
-    <View style={styles.presetGrid}>
-      {DURATION_PRESETS.map((minutes) => {
-        const selected = minutes === value;
-        return (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ selected }}
-            key={minutes}
-            onPress={() => onChange(minutes)}
-            style={({ pressed }) => [
-              styles.preset,
-              {
-                backgroundColor: selected ? theme.text : theme.elevated,
-                borderColor: selected ? theme.text : theme.border,
-                opacity: pressed ? 0.68 : 1,
-              },
-            ]}>
-            <Text style={[styles.presetText, { color: selected ? theme.background : theme.text }]}>{formatDuration(minutes)}</Text>
-          </Pressable>
-        );
-      })}
-    </View>
   );
 }
 
@@ -188,21 +132,32 @@ function RowIcon({ icon, theme }: { icon: ComponentProps<typeof MaterialIcons>['
 }
 
 function ActionRow({
+  badge,
+  disabled,
   icon,
   label,
   onPress,
   theme,
 }: {
+  badge?: string;
+  disabled?: boolean;
   icon: ComponentProps<typeof MaterialIcons>['name'];
   label: string;
   onPress: () => void;
   theme: typeof DHULO_THEMES.obsidian;
 }) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={[styles.row, { borderBottomColor: theme.border }]}>
+    <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={[styles.row, { borderBottomColor: theme.border, opacity: disabled ? 0.7 : 1 }]}>
       <RowIcon icon={icon} theme={theme} />
       <Text style={[styles.rowLabel, { color: theme.text }]}>{label}</Text>
-      <MaterialIcons name="chevron-right" size={22} color={theme.faint} />
+      {badge ? (
+        <View style={[styles.comingSoon, { backgroundColor: theme.elevated }]}>
+          <MaterialIcons name="schedule" size={14} color={theme.muted} />
+          <Text style={[styles.comingSoonText, { color: theme.muted }]}>{badge}</Text>
+        </View>
+      ) : (
+        <MaterialIcons name="chevron-right" size={22} color={theme.faint} />
+      )}
     </Pressable>
   );
 }
@@ -233,34 +188,17 @@ function ToggleRow({
 }
 
 const styles = StyleSheet.create({
-  about: {
-    alignItems: 'flex-start',
-    borderCurve: 'continuous',
-    borderRadius: 22,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
-    padding: 16,
-  },
-  aboutCopy: {
-    flex: 1,
-  },
-  aboutIcon: {
+  comingSoon: {
     alignItems: 'center',
     borderCurve: 'continuous',
-    borderRadius: 12,
-    height: 40,
-    justifyContent: 'center',
-    width: 40,
+    borderRadius: 999,
+    flexDirection: 'row',
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
   },
-  aboutText: {
-    fontSize: 14,
-    fontWeight: '700',
-    lineHeight: 22,
-    marginTop: 8,
-  },
-  aboutTitle: {
-    fontSize: 21,
+  comingSoonText: {
+    fontSize: 11,
     fontWeight: '900',
   },
   content: {
@@ -332,38 +270,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 46,
   },
-  notice: {
-    alignItems: 'flex-start',
-    borderRadius: 8,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 10,
-    padding: 14,
-  },
-  noticeText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '800',
-    lineHeight: 21,
-  },
-  preset: {
-    alignItems: 'center',
-    borderCurve: 'continuous',
-    borderRadius: 13,
-    borderWidth: 1,
-    minWidth: '30%',
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-  },
-  presetGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  presetText: {
-    fontSize: 13,
-    fontWeight: '900',
-  },
   row: {
     alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -383,10 +289,6 @@ const styles = StyleSheet.create({
   rowLabel: {
     flex: 1,
     fontSize: 15,
-    fontWeight: '800',
-  },
-  rowValue: {
-    fontSize: 14,
     fontWeight: '800',
   },
   settingCopy: {
